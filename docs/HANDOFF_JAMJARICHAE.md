@@ -1,0 +1,89 @@
+# 잠자리채 작업 인계 (새 세션은 이 파일부터 읽는다)
+
+갱신: 2026-11-14 13:52 KST(kiro-cli 세션 `sess_5b231bf0`, W5·W6 실제 실행 + release PASS). 이전: 13:36 세션 `sess_b4b2809d`. 제출 18:00(사용자 자료 기준, 현장 재확인).
+
+> 지금 실행 중: dev 서버(cmd pid 20656, http://localhost:3000), 워커 npm pid 20916 / node pid 33668(로그 `.data/worker6.out.log`, 13:44 youtube.ts 수정 반영). 진단 스크립트 `.data/diag-*.ts`, `.data/diag-submit.mjs`(담기+맡기기 API 호출, git 제외).
+
+## 1. 먼저 읽을 것 (순서)
+
+1. `AGENTS.md` — 공통 규칙(완료 기준: `node scripts/quality.mjs task` PASS 후에만 `[x]`)
+2. `challenge.completed.md` — 문제 원문, 확정/제안/제약 구분, 연동 점검 결과
+3. `.kiro/specs/jamjarichae/requirements.md` → `design.md` → `tasks.md` (Quick Spec, 활성 Spec)
+4. 이 파일의 4절(남은 작업)
+
+`challenge.md`(원본 양식)는 수정하지 않는다. `.kiro/specs/mvp/`와 `src/domain/program-report.ts` 등은 어제 템플릿(연습 주제)이라 참고만 한다.
+
+## 2. 사용자 확정 사항
+
+- 서비스명 **잠자리채**, 한 줄 소개 **"날아가는 생각, 잠자리에서 잡아드립니다"**
+- 대회 주제: 내 일상에 바로 적용할 수 있는 서비스(나와 주변 사람이 매일 겪는 작은 불편). 심사 Kiro 활용 35 / 작동 30 / 문제정의 20 / 사용자 가치 15. AI 평가 + 운영진 검토
+- 작업 방식: 어제 템플릿 절차(change-topic 등) 대신 Kiro Spec 방식(요구→설계→작업). **3시간 안에 제출할 MVP, 속도 우선, Quick Spec**
+- UI 참고: 루트의 `Neo-Brutalism Mobile App UI Design _ Tuckii.jpg`(굵은 검은 테두리, 하드 그림자, 노랑·분홍·보라·초록, 폴더 탭 카드) → 적용함
+- 컨텍스트가 줄면 이 인계 파일을 남길 것
+
+## 3. 현재 상태 (실제 실행으로 확인한 것만)
+
+| 항목 | 상태 | 근거 |
+|---|---|---|
+| 도메인 계약·판정·렌더 | 완료 | `src/domain/jamjarichae/*`, 테스트 44개 |
+| 저장소·URL 가드·서비스·워커 로직 | 완료 | `src/lib/jamjari/*`, 테스트 43개(총 87) |
+| `node scripts/quality.mjs task` | PASS | 13:00경 typegen·typecheck·test PASS, `npm.cmd run lint` 통과 |
+| 워커 프로세스 | 동작 | `npm.cmd run worker`. 13:44 재시작(npm pid 20916 / node pid 33668) |
+| 실제 kiro-cli 실행 | W3 32초, W1 3회, W4 32초, **W5 웹 17초·유튜브 31초(프레임 6장), W6 10초**(13:40–13:47) | `.data/worker*.out.log`, `.data/jamjarichae/jobs/*.json`, `docs/integration-status.md` 2절 |
+| 브라우저(Edge, Playwright MCP) | 확인 | 1440px: 담기→맡기기→브리핑→검토 체크→다운로드(attachment) / 잘못된 조합 오류 / 보고서 CSP·스크립트 없음 / W4 iframe origin null·쿠키 SecurityError·버튼 동작 / 390px 가로 넘침 원인(장식 원) 수정함 |
+| dev 서버 | 실행 중 | `npm.cmd run dev` Start-Process(pid 20656), http://localhost:3000 |
+
+연동 미구성(가짜로 채우지 않음): Anthropic 키, Google OAuth, Calendar MCP, Notion 토큰. Notebook 공개 API는 영상 생성 미지원(로드맵). 이미지 내용 분석 미연결.
+
+git: 어제 연습(job-choice) WIP는 타입 오류가 있어 `git stash@{0}`("practice job-choice WIP …")로 보관 + `.kiro/runs/backup-practice-job-choice-20261114.patch`. 복구는 `git stash pop`. 커밋·push 아직 안 함(사용자 지시 전 금지).
+
+### 13:08 추가 확인
+
+- 재시작 복구 실증 **성공**: 작업 `j_ffefff1abb396176`(W1 실제) 실행 중 워커 강제 종료(13:05:25) → 새 워커(pid 30340) 기동 → lease 만료 뒤 04:06:23Z "워커 중단 감지 → 체크포인트부터 재개(시도 2)", ingest 단계 재실행 없음
+- 같은 작업 시도 2에서 kiro-cli 응답이 스키마 검증 실패 → `invalid_output` → 재시도 예약(60초 뒤, 시도 3). **원인 미조사**
+- 이후 `node scripts/quality.mjs task` PASS, `npm.cmd run lint` 통과
+- tasks.md: 1·2·3·4·6 `[x]`. 5는 api.test.ts 미작성, 7은 integration-status.md 미작성이라 `[ ]`
+- 실행 중 프로세스: 워커 pid 30340(로그 `.data/worker3.out.log`), dev 서버 pid 20656
+
+## 4. 남은 작업 (tasks.md 기준)
+
+- [x] **invalid_output 원인 조사** (13:17 완료): kiro-cli 세션 로그(`~/.kiro/sessions/c2f72bad9d218502/sess_3d749dc1-…/messages.jsonl`, 04:07:28Z)의 시도 2 최종 응답을 `.data/diag-invalid-output.ts`로 같은 `extractJson`+스키마에 다시 넣어 확인 → **`howItWorks` 7개(상한 6) 1곳 `too_big`**. 시도 3 응답(6개)은 통과, 작업 최종 `completed`(attempts 3).
+  - 수정: `outputs.ts`에 `list()` 추가 — 표시용 목록은 상한 초과 시 앞에서부터 잘라 씀(문자열 길이·`ideas` 개수는 계속 엄격). `prompts.ts` 개념 프롬프트에 목록 상한 명시. `worker.ts` `askKiro`가 어긴 필드 경로·코드(값 제외)를 오류 메시지와 재시도 기록에 남김
+  - 확인: 시도 2 원본 응답이 이제 스키마 통과(`schema OK`), 테스트 92개 통과(+5), `node scripts/quality.mjs task` PASS(13:16)
+  - 워커 재시작: pid 30340 종료 → 새 워커(npm pid 31248 / node pid 31052, 로그 `.data/worker4.out.log`)
+- [x] tasks 5 (13:19 완료): `src/app/api/jamjari/api.test.ts` 20개(헤더 없는 쓰기 403, 다른 Origin 403, 조합 거부 422, 담기 201·중복 200, 맡기기, 취소 409, 없는 ID·경로 조작 404, 답변 재큐, W2 링크 검증, 보고서·체험 CSP). 전체 테스트 167개 통과(잠자리채 112), `quality.mjs task` PASS, lint 통과 → tasks.md 5 `[x]`
+- [x] tasks 7 (13:26 완료): `docs/integration-status.md` 작성. 실제 작업 5건(W3 32초, W1 59초, W4 32초, W1 재시작 복구 4분 7초, W1 56초), 브라우저로 W3·W4·W1 결과 확인(13:24–13:25)
+  - **새로 발견·수정**: W1 웹 검색이 headless에서 전부 거부되고 있었음(신뢰 도구 `web_search`가 kiro-cli 3.3 V3의 `remote_web_search`를 덮지 못함). 이전 W1 2건은 web_fetch로만 자료 수집 → 위 3절의 "W1 web_search 확인"은 틀린 기록. `kiro.ts` `WEB_TOOLS = ["web_fetch","remote_web_search"]`로 수정 후 실제 W1 `j_c11cae908b2ee864`에서 검색 3회 성공·거부 0회
+  - 워커 재시작: 새 워커 npm pid 15292 / node pid 32136, 로그 `.data/worker5.out.log`
+- [x] 문서 (13:34 완료): `docs/integration-status.md`, `docs/skill-adapters.md`, `docs/evidence.md`(요구→코드→테스트→시연 + Kiro 활용 증거), `docs/DEMO.md`(3분 대본, 연습 주제 대본을 교체), `README.md` 앞부분(잠자리채 소개·경로별 오늘 상태·실행법)과 맨 아래 `## 팀`(팀명 한글 _입력 필요_)
+  - 대본 근거로 브라우저 재확인(13:24–13:31): 잘못된 조합 안내 2줄·담기 버튼 잠김, 샘플 담기→맡기기(1)→10초 안에 완료, 브리핑 "맡긴 9개 중 완료 8, 외부 조치 필요 1", 연결 상태 6줄
+- [x] `node scripts/quality.mjs release --force` **PASS** (13:34:17): lint·typegen·typecheck·test(167개)·build. 이후 문서 시각 표기만 고침 → tasks.md 8 `[x]`. **tasks.md 1–8 모두 `[x]`**
+- [x] W5·W6 실제 실행 (13:40–13:50, 세션 `sess_5b231bf0`)
+  - 13:39 dev 서버(200)·워커(심장박동 정상) 살아 있음 확인
+  - W5 웹 `j_3eb9d54aa7b198eb`(ko.wikipedia 잠자리) 17초 completed, 본문 6,359자
+  - W5 유튜브 `j_09e833261c0fa5ea`(jNQXAC9IVRw, 19초 영상) 29초 partial, **프레임 0장** → 원인: yt-dlp `-f best…/worst`가 "Requested format is not available". `youtube.ts` 선택식을 영상 전용 `bv*[height<=480]…` 우선으로 수정, 워커 재시작(npm 20916 / node 33668, `.data/worker6.out.log`)
+  - W5 유튜브 재실행 `j_c173998ada19c72b` 31초 partial, 자막 6줄 + 실제 프레임 6장. Edge로 이미지 6장·시점 링크 6개 확인
+  - W6 `j_b15b2e4a438dd7c6` 10초 awaiting_external_action, 행사/신청 마감 구분, URL 0개
+  - `integration-status.md`(1·2·3.3·5절), `evidence.md`(R3.7–R3.10, 엔진 횟수, 4절), README 경로 표 갱신
+  - `quality.mjs task` PASS(13:47), `release --force` **PASS(13:50:20)**
+- [ ] **제출 레포 정리 — 사용자 지시 받음(13:4x)**: 레포 `https://github.com/stat-yongsan/kirothon-team-030`, 팀명 **AX:IS**. remote 추가·AGENTS.md 갱신·커밋·push 허용, 단 **push 전에 올릴 내용을 보여 주고 확인받기**
+  - 템플릿 확인 완료(13:43, web_fetch): 파일 `.gitignore`, `README.md`(1 문제 정의~7 테스트 + `## 팀`: `- **팀 번호:**`, `- **팀명:**`, 이름/역할 표), `BUILD_REPORT.md`(Kiro 활용 표: 기획·설계·구현·검증·기타), `SUBMISSION_GUIDE.md`. 필수: README 섹션 전부·Demo 줄, BUILD_REPORT.md, `.kiro/` 커밋, 최상단 `PRESENTATION.pdf`, 18:00 전 마지막 push, Public
+  - 사용자 확인 필요: ① 기존 kirothon-2026 커밋 이력(Vercel 계정명 등 포함)을 공개 레포에 같이 올릴지 ② 루트의 `Neo-Brutalism … Tuckii.jpg`(외부 디자인 참고 이미지), `KIROTHON_DAYPATCH_20261114.html`, `KIRO Basic.pdf`, `컨셉 보드 … .pdf`를 올릴지 ③ Demo 줄 링크 ④ PRESENTATION.pdf ⑤ 팀원 이름·역할
+  - 사용자 요청(13:5x) "구글 로그인은 JMT(=JWT로 추정) 사용" → 새 기능이고 OAuth 클라이언트 ID·비밀값이 없어 **확인 질문 중, 착수 안 함**
+- [ ] 사용자 지시가 있을 때만 커밋·push
+
+## 5. 실행 방법
+
+```powershell
+npm.cmd run dev          # 화면 http://localhost:3000
+npm.cmd run worker       # 별도 터미널. 꺼져 있으면 화면에 "워커 꺼짐"
+node scripts/quality.mjs task
+```
+
+데이터: `.data/jamjarichae/`(git 제외). 지우면 작업 기록이 모두 사라진다.
+
+## 6. 주의
+
+- 결과를 실제보다 좋게 보고하지 않는다. W2는 영상 링크를 만들지 않고 "외부 조치 필요", W6는 Calendar 미연결로 일정 URL 없음, W5 유튜브는 자막 기반(화면 내용 미확인) partial
+- kiro-cli는 작업별 빈 폴더(`.data/jamjarichae/sandbox/{jobId}`)에서 stdin 프롬프트로 실행, 신뢰 도구는 W1·W2만 `remote_web_search,web_fetch`
+- `next dev`가 네트워크 인터페이스에도 열린다. 쓰기 API는 `x-jamjari: 1` 헤더와 같은 출처를 요구하지만 GET은 열려 있다(로컬 시연 전제)

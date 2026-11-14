@@ -1,0 +1,21 @@
+{
+  "name": "hackathon-demo",
+  "description": "저장된 검사 결과와 git 기록으로 3분 시연 대본·제출 초안 작성. 배포·PR은 하지 않음",
+  "inputs": {
+    "notes": "prompt"
+  },
+  "steps": [
+    {
+      "type": "step",
+      "id": "collect",
+      "agent": "builder",
+      "prompt": "읽기 전용 사실 수집만 하라. 파일을 고치지 말고 배포·push·PR을 하지 말라.\n실행: `git log --oneline -15`, `git diff --stat`, `node scripts/quality.mjs verify-status`.\n읽기: .kiro/runs/quality/last-release.json, last-task.json, docs/SETUP_STATUS.md, challenge.md(발표 시간·제출 형식·심사 기준).\n사용자 메모: {{notes}}\n출력: 검사별 상태와 시각, verify-status 결과, 최근 변경 요약, live/mock 확인 여부, 확인되지 않은 항목."
+    },
+    {
+      "type": "step",
+      "id": "write",
+      "agent": "demo-editor",
+      "prompt": "수집된 사실:\n{{previous.output}}\n\n이 사실만 근거로 docs/DEMO.md(3분 대본)와 docs/SUBMISSION.md(제출 체크리스트·실행 방법·검사 결과·알려진 한계·Kiro 활용 증거)를 갱신하라. 확인되지 않은 성과를 만들지 말고, mock만 확인했으면 그렇게 적어라. Kiro에서 실제 수행한 작업만 Kiro 활용 증거로 적어라.\n출력: 바꾼 문서와 비워 둔 항목."
+    }
+  ]
+}

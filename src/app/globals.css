@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+/* 외부 폰트 다운로드 없이 빌드되도록 시스템 한글 글꼴을 사용한다 */
+@theme inline {
+  --font-sans: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", Consolas, monospace;
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font-sans);
+}
