@@ -50,6 +50,8 @@ export interface Result {
   videoDownloadUrl?: string;
   videoSeconds?: number;
   providerResourceId?: string;
+  /** 사용자가 외부 조치 후 직접 붙여 넣은 링크(W2 영상). 앱이 생성·재생 확인하지 않음 */
+  userLinkUrl?: string;
   notionPageUrl?: string;
   notionSyncStatus: "pending" | "synced" | "failed" | "not_configured";
   assumptions: string[];
@@ -94,6 +96,10 @@ export interface Job {
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
+  /** 사용자가 "확인완료"를 누른 시각. 있으면 아침 화면에서 빠지고 전체 결과함에 쌓인다 */
+  acknowledgedAt?: string | null;
+  /** 화면 정리용: true면 목록·브리핑에서 숨긴다(파일은 지우지 않음) */
+  hidden?: boolean;
 }
 
 /** 생성 엔진과 코드 판정에 넘길 답변 묶음. 답이 없으면 null */

@@ -1,4 +1,4 @@
-// API 경계 테스트 (tasks 5): Route Handler를 직접 호출한다. 저장소는 임시 폴더.
+﻿// API 경계 테스트 (tasks 5): Route Handler를 직접 호출한다. 저장소는 임시 폴더.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";

@@ -10,7 +10,7 @@ import type { Job } from "../../domain/jamjarichae/job.ts";
 export const ID_RE = /^[a-z]_[0-9a-f]{16}$/;
 
 export function dataDir(): string {
-  return process.env.JAMJARI_DATA_DIR?.trim() || path.join(process.cwd(), ".data", "jamjarichae");
+  return process.env.JAMJARI_DATA_DIR?.trim() || path.join(/*turbopackIgnore: true*/ process.cwd(), ".data", "jamjarichae");
 }
 
 const sub = (name: string) => path.join(dataDir(), name);

@@ -51,6 +51,26 @@ const box = `${frame} bg-[#fffdf5]`;
 const btn =
   "rounded-xl border-[3px] border-black px-4 py-2 font-bold shadow-[3px_3px_0_#000] transition active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#000] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb]";
 
+type Page = "home" | "capture" | "board" | "morning" | "all";
+const HOME: { id: Exclude<Page, "home">; n: string; label: string; color: string; badge: (d: ApiState | null) => string }[] = [
+  { id: "capture", n: "1", label: "목적이 뭐야?", color: "bg-[#ffd23f]", badge: () => "생각·링크·사진 담기" },
+  {
+    id: "board",
+    n: "2",
+    label: "밤 작업 보드",
+    color: "bg-[#8ecbff]",
+    badge: (d) => `대기·진행 중 ${(d?.jobs ?? []).filter((j) => ["draft", "queued", "scheduled", "running"].includes(j.status)).length}개`,
+  },
+  {
+    id: "morning",
+    n: "3",
+    label: "아침에 꺼내보기",
+    color: "bg-[#ff6b9a]",
+    badge: (d) => `새 결과 ${(d?.jobs ?? []).filter((j) => j.result && !j.acknowledgedAt && ["completed", "partial", "failed", "awaiting_external_action", "awaiting_external_confirmation"].includes(j.status)).length}개`,
+  },
+  { id: "all", n: "4", label: "전체 결과함", color: "bg-[#7bd88f]", badge: (d) => `확인완료 ${(d?.jobs ?? []).filter((j) => j.acknowledgedAt).length}개` },
+];
+
 function api(path: string, init?: RequestInit) {
   return fetch(path, { ...init, headers: { "x-jamjari": "1", ...(init?.headers ?? {}) } });
 }
@@ -60,6 +80,7 @@ const newKey = () => (typeof crypto !== "undefined" && "randomUUID" in crypto ? 
 export function JamjariApp() {
   const [data, setData] = useState<ApiState | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [page, setPage] = useState<Page>("home");
 
   const [text, setText] = useState("");
   const [url, setUrl] = useState("");
@@ -176,19 +197,21 @@ export function JamjariApp() {
     }
   }
 
-  async function act(id: string, action: "cancel" | "answer", value?: string) {
+  async function act(id: string, action: "cancel" | "answer" | "ack", value?: string) {
     const res = await api(`/api/jamjari/jobs/${id}/${action}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(action === "answer" ? { answer: value ?? "" } : {}),
     });
     const body = await res.json().catch(() => null);
-    setNotice(res.ok ? (action === "answer" ? "답변을 저장하고 다시 맡겼습니다." : "취소했습니다.") : body?.error?.message ?? "요청 실패");
+    setNotice(res.ok ? (action === "answer" ? "답변을 저장하고 다시 맡겼습니다." : action === "ack" ? "확인완료: 전체 결과함에 보관했습니다." : "취소했습니다.") : body?.error?.message ?? "요청 실패");
     await refresh();
   }
 
   const jobs = data?.jobs ?? [];
   const drafts = jobs.filter((j) => j.status === "draft");
+  // 밤 작업 보드: 저장(대기)·큐·진행 중인 것만. 끝난 것은 아침에 꺼내보기로 간다
+  const waiting = jobs.filter((j) => ["draft", "queued", "scheduled", "running"].includes(j.status));
   const worker = data?.connections.find((c) => c.id === "worker");
   const showErrors = touched && !check.ok ? check.errors : [];
 
@@ -224,14 +247,55 @@ export function JamjariApp() {
         </p>
       )}
 
-      {/* 1. 생각 잡기 */}
+      {page === "home" ? (
+        <nav aria-label="메뉴" className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2" data-testid="home">
+          {HOME.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              data-testid={`page-${c.id}`}
+              onClick={() => setPage(c.id)}
+              className={`${frame} ${c.color} flex min-h-44 flex-col items-start justify-between p-5 text-left transition hover:-translate-y-0.5 active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0_#000] focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-[#2563eb] sm:min-h-56`}
+            >
+              <span className="text-5xl font-black leading-none">{c.n}</span>
+              <span>
+                <span className="block text-xl font-black break-keep sm:text-2xl">{c.label}</span>
+                <span className="mt-1 block text-sm font-bold">{c.badge(data)}</span>
+              </span>
+            </button>
+          ))}
+        </nav>
+      ) : (
+        <nav aria-label="돌아가기" className="mt-6">
+          <button type="button" data-testid="page-home" onClick={() => setPage("home")} className={`${btn} bg-white text-sm`}>
+            ← 처음으로
+          </button>
+        </nav>
+      )}
+
+      {/* 1. 목적 · 생각 담기 */}
+      {page === "capture" && (
+      <>
+      <div data-testid="briefing-area">
+        <p data-testid="briefing" role="status" className="inline-block rounded-xl border-[3px] border-black bg-[#ffd23f] px-3 py-1.5 font-black shadow-[3px_3px_0_#000]">
+          {data ? data.briefing.sentence : "불러오는 중…"}
+        </p>
+        {data && data.briefing.questions.length > 0 && (
+          <div className="mt-4 rounded-2xl border-[3px] border-black bg-[#ffe1ec] p-3" data-testid="questions">
+            <h3 className="font-black">내 답변이 필요한 것 {data.briefing.questions.length}개</h3>
+            {data.briefing.questions.map((q) => (
+              <AnswerBox key={q.id} job={q} label="답변" onSubmit={(v) => act(q.id, "answer", v)} />
+            ))}
+          </div>
+        )}
+      </div>
       <section aria-labelledby="capture-h" className={`${box} mt-6 px-4 py-5 sm:px-6`}>
         <h2 id="capture-h" className="text-xl font-black">
-          ① 생각 잡기
+          목적이 뭐야?
         </h2>
 
         <div className="mt-3 flex flex-wrap gap-2" aria-label="샘플로 채우기">
-          {SAMPLE_CAPTURES.map((s) => (
+          {SAMPLE_CAPTURES.filter((s) => s.id !== "proto" && s.id !== "bad").map((s) => (
             <button key={s.id} type="button" data-testid={`sample-${s.id}`} onClick={() => fillSample(s.id)} className={`${btn} bg-white px-3 py-1 text-sm`}>
               {s.label}
             </button>
@@ -248,7 +312,7 @@ export function JamjariApp() {
           onChange={(e) => setText(e.target.value)}
           rows={3}
           maxLength={LIMITS.textChars + 100}
-          placeholder="방금 떠오른 생각, 들은 용어, 포스터 문구…"
+          placeholder="예) RAG가 뭐지? / 점심 메뉴 고르는 데 매일 10분씩 쓴다, 줄이는 서비스 / 11월 20일 15:00 AI 세미나"
           className="mt-1 w-full rounded-xl border-[3px] border-black bg-white px-3 py-2 text-base shadow-[3px_3px_0_#000] focus:outline-none focus-visible:ring-4 focus-visible:ring-[#2563eb]"
         />
         <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -320,7 +384,7 @@ export function JamjariApp() {
               <label key={w.id} className="cursor-pointer">
                 <input type="radio" name="output" value={w.output} checked={output === w.output} onChange={() => setOutput(w.output)} className="peer sr-only" data-testid={`output-${w.output}`} />
                 <span className="inline-block rounded-xl border-[3px] border-black bg-white px-3 py-1.5 text-sm font-bold shadow-[3px_3px_0_#000] peer-checked:bg-black peer-checked:text-white peer-focus-visible:ring-4 peer-focus-visible:ring-[#2563eb]">
-                  {w.code} · {w.outputLabel}
+                  {w.outputLabel}
                 </span>
               </label>
             ))}
@@ -353,8 +417,12 @@ export function JamjariApp() {
           </p>
         )}
       </section>
+      </>
+
+      )}
 
       {/* 2. 밤 작업 보드 */}
+      {page === "board" && (
       <section aria-labelledby="board-h" className={`${frame} mt-6 bg-[#1b2a4e] px-4 py-5 text-white sm:px-6`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="board-h" className="text-xl font-black">
@@ -370,16 +438,20 @@ export function JamjariApp() {
           </p>
         )}
         <ul className="mt-4 grid gap-3 sm:grid-cols-2" data-testid="board">
-          {jobs.length === 0 && <li className="text-sm text-white/80">아직 담은 생각이 없습니다.</li>}
-          {jobs.slice(0, 12).map((j) => (
+          {waiting.length === 0 && <li className="text-sm text-white/80">대기·진행 중인 작업이 없습니다.</li>}
+          {waiting.slice(0, 12).map((j) => (
             <BoardCard key={j.id} job={j} onCancel={() => act(j.id, "cancel")} />
           ))}
         </ul>
       </section>
 
-      {/* 3. 아침에 꺼내보기 */}
-      <Morning data={data} onAnswer={(id, v) => act(id, "answer", v)} />
+      )}
 
+      {/* 3. 아침에 꺼내보기 · 전체 결과함 */}
+      {(page === "morning" || page === "all") && <Morning data={data} view={page} onAck={(id) => act(id, "ack")} />}
+
+      {page !== "home" && (
+      <>
       {/* 4. 연결 상태 */}
       <section aria-labelledby="conn-h" className={`${box} mt-6 px-4 py-5 sm:px-6`}>
         <h2 id="conn-h" className="text-xl font-black">
@@ -397,6 +469,9 @@ export function JamjariApp() {
           ))}
         </ul>
       </section>
+
+      </>
+      )}
 
       <footer className="mt-6 pb-6 text-xs font-medium text-neutral-800">
         잠자리채 MVP · 이 PC의 소유자 1명 로컬 모드 · 생성 엔진 kiro-cli headless · 판정(조합·날짜·개수·안전 검사)은 코드가 합니다.
@@ -425,7 +500,7 @@ function BoardCard({ job, onCancel }: { job: JobView; onCancel: () => void }) {
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={job.status} />
         <span className={`rounded-lg border-2 border-black px-2 py-0.5 text-xs font-bold ${PURPOSE_STYLE[spec.purpose].tab}`}>
-          {spec.code} {PURPOSE_LABEL[spec.purpose]} · {spec.outputLabel}
+          {PURPOSE_LABEL[spec.purpose]} · {spec.outputLabel}
         </span>
         {job.sample && <span className="rounded-lg border-2 border-black bg-[#fde68a] px-2 py-0.5 text-xs font-bold">샘플</span>}
       </div>
@@ -445,45 +520,37 @@ function BoardCard({ job, onCancel }: { job: JobView; onCancel: () => void }) {
   );
 }
 
-function Morning({ data, onAnswer }: { data: ApiState | null; onAnswer: (id: string, v: string) => void }) {
-  const b = data?.briefing;
-  const results = (data?.jobs ?? []).filter((j) => j.result && j.status !== "draft");
+const FINISHED: JobStatus[] = ["completed", "partial", "failed", "awaiting_external_action", "awaiting_external_confirmation"];
+
+function Morning({ data, view, onAck }: { data: ApiState | null; view: "morning" | "all"; onAck: (id: string) => void }) {
+  const finished = (data?.jobs ?? []).filter((j) => j.result && FINISHED.includes(j.status));
+  const results = finished.filter((j) => !j.acknowledgedAt);
+  const archive = finished.filter((j) => j.acknowledgedAt).sort((a, b) => (b.acknowledgedAt ?? "").localeCompare(a.acknowledgedAt ?? ""));
   return (
     <section aria-labelledby="morning-h" className={`${box} mt-6 px-4 py-5 sm:px-6`}>
       <h2 id="morning-h" className="text-xl font-black">
-        ③ 아침에 꺼내보기
+        {view === "all" ? "전체 결과함" : "③ 아침에 꺼내보기"}
       </h2>
-      <p data-testid="briefing" role="status" className="mt-2 inline-block rounded-xl border-[3px] border-black bg-[#ffd23f] px-3 py-1.5 font-black shadow-[3px_3px_0_#000]">
-        {b ? b.sentence : "불러오는 중…"}
-      </p>
-
-      {b && b.questions.length > 0 && (
-        <div className="mt-4 rounded-2xl border-[3px] border-black bg-[#ffe1ec] p-3">
-          <h3 className="font-black">내 답변이 필요한 것 {b.questions.length}개</h3>
-          {b.questions.map((q) => (
-            <AnswerBox key={q.id} job={q} label="답변" onSubmit={(v) => onAnswer(q.id, v)} />
-          ))}
-        </div>
-      )}
-
-      {b && b.top.length > 0 && (
-        <>
-          <h3 className="mt-5 font-black">먼저 볼 결과</h3>
-          <div className="mt-2 grid gap-3 md:grid-cols-3" data-testid="top-results">
-            {b.top.map((j) => (
-              <ResultCard key={j.id} job={j} compact />
-            ))}
-          </div>
-        </>
-      )}
-
-      <h3 className="mt-6 font-black">전체 결과함</h3>
-      <div className="mt-2 grid gap-3" data-testid="results">
-        {results.length === 0 && <p className="text-sm text-neutral-600">아직 결과가 없습니다.</p>}
+      {view === "morning" && (
+      <>
+      <h3 className="mt-5 font-black">완료된 결과 {results.length}개</h3>
+      <div className="mt-2 grid gap-3" data-testid="results-new">
+        {results.length === 0 && <p className="text-sm text-neutral-600">새로 확인할 결과가 없습니다.</p>}
         {results.map((j) => (
-          <ResultCard key={j.id} job={j} onAnswer={onAnswer} />
+          <ResultCard key={j.id} job={j} onAck={() => onAck(j.id)} />
         ))}
       </div>
+      </>
+      )}
+
+      {view === "all" && (
+      <div className="mt-3 grid gap-3" data-testid="results">
+        {archive.length === 0 && <p className="text-sm text-neutral-600">확인완료한 결과가 아직 없습니다. 아침에 꺼내보기에서 &ldquo;확인완료&rdquo;를 누르면 여기에 쌓입니다.</p>}
+        {archive.map((j) => (
+          <ResultCard key={j.id} job={j} />
+        ))}
+      </div>
+      )}
     </section>
   );
 }
@@ -506,7 +573,7 @@ function AnswerBox({ job, label, onSubmit, placeholder }: { job: JobView; label:
   );
 }
 
-function ResultCard({ job, compact, onAnswer }: { job: JobView; compact?: boolean; onAnswer?: (id: string, v: string) => void }) {
+function ResultCard({ job, compact, onAnswer, onAck }: { job: JobView; compact?: boolean; onAnswer?: (id: string, v: string) => void; onAck?: () => void }) {
   const r = job.result!;
   const spec = workflowSpec(job.workflow);
   const isProto = r.artifactType === "web_prototype";
@@ -515,7 +582,7 @@ function ResultCard({ job, compact, onAnswer }: { job: JobView; compact?: boolea
     <article data-testid="result-card" className="rounded-2xl border-[3px] border-black bg-white p-3 shadow-[4px_4px_0_#000]">
       <div className="flex flex-wrap items-center gap-2">
         <StatusBadge status={job.status} />
-        <span className={`rounded-lg border-2 border-black px-2 py-0.5 text-xs font-bold ${PURPOSE_STYLE[spec.purpose].tab}`}>{spec.code}</span>
+        <span className={`rounded-lg border-2 border-black px-2 py-0.5 text-xs font-bold ${PURPOSE_STYLE[spec.purpose].tab}`}>{spec.outputLabel}</span>
         <span className="rounded-lg border-2 border-black bg-[#f1ece0] px-2 py-0.5 text-xs font-bold">{r.engine === "sample" ? "샘플 결과" : r.engine === "kiro-cli" ? "kiro-cli 실제 생성" : "코드"}</span>
       </div>
       <h4 className="mt-2 font-black break-keep">{r.title}</h4>
@@ -536,11 +603,10 @@ function ResultCard({ job, compact, onAnswer }: { job: JobView; compact?: boolea
             {job.sample ? "샘플 자료로 만든 영상" : "kiro-cli 조사 결과로 만든 영상"} · 약 {Math.round(r.videoSeconds ?? 0)}초 · 소리 없음
           </p>
         </div>
-      )}
-      <div className="mt-2 flex flex-wrap gap-2">
+      )}      <div className="mt-2 flex flex-wrap gap-2">
         {r.artifactUrl && (
           <a href={r.artifactUrl} target="_blank" rel="noopener" data-testid="open-artifact" className="rounded-lg border-2 border-black bg-[#ffd23f] px-2 py-1 text-sm font-bold">
-            {isProto ? "체험 페이지 열기" : spec.output === "video" ? "조사 자료(HTML) 열기" : spec.output === "calendar" ? "일정 판정 보기" : "HTML 열기"}
+            {isProto ? "체험 페이지 열기" : spec.output === "video" ? "조사 자료(HTML) 열기" : spec.output === "calendar" ? (r.providerResourceId ? "Google Calendar에서 일정 열기" : "일정 판정 보기") : "HTML 열기"}
           </a>
         )}
         {r.videoDownloadUrl && (
@@ -565,7 +631,12 @@ function ResultCard({ job, compact, onAnswer }: { job: JobView; compact?: boolea
             )}
           </>
         )}
-      </div>
+</div>
+      {onAck && (
+        <button type="button" data-testid="ack" onClick={onAck} className={`${btn} mt-3 w-full bg-[#7bd88f] py-1.5 text-sm`}>
+          ✓ 확인완료 (전체 결과함으로 보내기)
+        </button>
+      )}
       {!compact && (
         <details className="mt-2 text-sm">
           <summary className="cursor-pointer font-bold">분석 범위·가정·Notion</summary>

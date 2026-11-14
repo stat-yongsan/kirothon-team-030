@@ -22,6 +22,8 @@ import { conceptBody, ideaBody, scheduleBody, shell, summaryBody } from "../../d
 import { decideSchedule, ScheduleExtractionSchema, verifyYearStated, type ScheduleDecision, type ScheduleExtraction } from "../../domain/jamjarichae/schedule.ts";
 import { captureDate } from "../../domain/jamjarichae/contracts.ts";
 import { notionConfigured } from "./connections.ts";
+import { CalendarError, createCalendarEvent, readCalendarConfig, type CreatedEvent, type FetchLike as CalFetch } from "./calendar.ts";
+import { readNotionConfig, syncJobToNotion, type FetchLike } from "./notion.ts";
 import { fetchPublicPage, probeUrl, UrlBlockedError, type FetchedPage } from "./fetch-url.ts";
 import { WEB_TOOLS, type KiroRunner } from "./kiro.ts";
 import * as P from "./prompts.ts";
@@ -40,6 +42,9 @@ export interface WorkerDeps {
   env: Record<string, string | undefined>;
   kiroTimeoutMs: number;
   leaseMs: number;
+  /** 테스트용 Notion fetch 대체. 없으면 전역 fetch */
+  notionFetch?: FetchLike;
+  calendarFetch?: CalFetch;
 }
 
 export function defaultDeps(kiro: KiroRunner): WorkerDeps {
@@ -186,9 +191,17 @@ async function syncNotion(job: Job, result: Result, deps: WorkerDeps): Promise<v
   const r = await step(job.id, "sync_notion", deps, async () => {
     if (job.sample) return { status: "not_configured" as const, note: "샘플 모드: Notion에 쓰지 않음" };
     if (!notionConfigured(deps.env)) return { status: "not_configured" as const, note: "Notion 연결 없음: 결과는 앱에만 보관" };
-    return { status: "failed" as const, note: "Notion 동기화 어댑터는 이번 버전에 실연동 검증 전이라 실행하지 않았습니다." };
+    const cfg = readNotionConfig(deps.env)!;
+    try {
+      const url = await syncJobToNotion(cfg, job, result, deps.notionFetch);
+      return { status: "synced" as const, note: "Notion 날짜별 페이지에 기록했습니다.", url };
+    } catch (error) {
+      // 기록 실패는 결과 자체를 실패로 만들지 않고 상태로만 드러낸다
+      return { status: "failed" as const, note: `Notion 기록 실패: ${error instanceof Error ? error.message : "알 수 없는 오류"}` };
+    }
   });
   result.notionSyncStatus = r.status;
+  if ("url" in r && r.url) result.notionPageUrl = r.url;
   result.coverageNotes.push(r.note);
 }
 
@@ -336,7 +349,6 @@ async function attachVideo(job: Job, r: ConceptResearch, result: Result, deps: W
     `영상: 장면 ${plan.scenes.length}개 · 약 ${Math.round(plan.totalSec)}초 · 내레이션·음악 없는 자막형 영상(HyperFrames 로컬 렌더).${job.sample ? " 샘플 자료로 만들었습니다." : ""}`,
   );
 }
-
 // ---- W3 아이디어 5개 ----
 
 async function runIdeas(job: Job, deps: WorkerDeps): Promise<Outcome> {
@@ -495,20 +507,60 @@ async function runSchedule(job: Job, deps: WorkerDeps): Promise<Outcome> {
   }
   const e = decision.event!;
   result.highlights = [`${e.date} ${e.startTime}–${e.endTime} ${e.title}`, `알림: ${decision.reminders.map((r) => r.label).join(", ")}`];
-  const { artifactId } = await step(job.id, "store_artifact", deps, async () => storeReport(job, result, "awaiting_external_action", scheduleBody(decision), deps));
-  attachReport(result, artifactId);
-  await syncNotion(job, result, deps);
-  await step(job.id, "external_action", deps, async () => ({ provider: "google_calendar", state: job.sample ? "sample_no_write" : "not_configured" }));
-  result.status = "partial";
-  result.coverageNotes.push(
-    job.sample ? "샘플 모드: Calendar에 쓰지 않습니다." : "Google Calendar가 연결되지 않아 일정을 만들지 않았습니다. 일정 URL이 없습니다.",
-    "알림 등록과 기기에 알림이 실제로 도착하는지는 별개입니다.",
+  const cal = await step(job.id, "external_action", deps, async (): Promise<CalendarOutcome> => {
+    if (job.sample) return { state: "sample_no_write" };
+    const cfg = readCalendarConfig(deps.env);
+    if (!cfg) return { state: "not_configured" };
+    try {
+      const made = await createCalendarEvent(cfg, job.id, e, decision.reminders, deps.calendarFetch);
+      return { state: "created", ...made };
+    } catch (error) {
+      if (error instanceof CalendarError && error.status === 401) return { state: "auth_failed", message: error.message };
+      if (error instanceof CalendarError) throw new StepError("external_action", "calendar_error", error.message, error.retryable);
+      throw error;
+    }
+  });
+  const created = cal.state === "created";
+  const { artifactId } = await step(job.id, "store_artifact", deps, async () =>
+    storeReport(job, result, created ? "completed" : "awaiting_external_action", scheduleBody(decision), deps),
   );
-  result.nextAction = "Google Calendar를 연결하면 이 내용(전날 같은 시각·당일 시작 시각 알림)으로 등록합니다.";
-  result.errors.push({ stage: "external_action", code: "calendar_not_connected", message: "Calendar 연결 없음", retryable: false });
+  attachReport(result, artifactId);
+  if (cal.state === "created") {
+    result.status = "completed";
+    result.artifactType = "calendar_event";
+    result.providerResourceId = cal.eventId;
+    result.artifactUrl = cal.htmlLink;
+    result.highlights.push("Google Calendar에 일정을 만들었습니다.");
+    result.coverageNotes.push(
+      `Google Calendar 일정 생성${cal.existing ? "(같은 작업의 기존 일정을 다시 찾았습니다)" : ""}. 알림 ${cal.reminders.map((m) => (m === 0 ? "시작 시각" : `${m}분 전`)).join(", ")} 등록.`,
+      "알림을 등록한 것과 기기에 알림이 실제로 도착하는지는 별개입니다.",
+    );
+    const skipped = decision.reminders.filter((r) => r.alreadyPassed);
+    if (skipped.length) result.coverageNotes.push(`이미 지난 알림(${skipped.map((r) => r.label).join(", ")})은 등록하지 않았습니다.`);
+    await syncNotion(job, result, deps);
+    return { status: "completed", result };
+  }
+  result.status = "partial";
+  if (cal.state === "auth_failed") {
+    result.coverageNotes.push(`Google 인증 실패: ${cal.message}. 일정을 만들지 않았고 일정 URL이 없습니다.`);
+    result.nextAction = "node scripts/google-auth.mjs로 Google 동의를 다시 받은 뒤 이 작업을 다시 시도하세요.";
+    result.errors.push({ stage: "external_action", code: "calendar_auth_failed", message: "Google 인증 실패", retryable: false });
+  } else {
+    result.coverageNotes.push(
+      job.sample ? "샘플 모드: Calendar에 쓰지 않습니다." : "Google Calendar가 연결되지 않아 일정을 만들지 않았습니다. 일정 URL이 없습니다.",
+      "알림 등록과 기기에 알림이 실제로 도착하는지는 별개입니다.",
+    );
+    result.nextAction = "Google Calendar를 연결하면 이 내용(전날 같은 시각·당일 시작 시각 알림)으로 등록합니다.";
+    result.errors.push({ stage: "external_action", code: "calendar_not_connected", message: "Calendar 연결 없음", retryable: false });
+  }
+  await syncNotion(job, result, deps);
   return { status: "awaiting_external_action", result };
 }
 
+type CalendarOutcome =
+  | { state: "sample_no_write" | "not_configured" }
+  | { state: "auth_failed"; message: string }
+  | ({ state: "created" } & CreatedEvent);
 const RUNNERS: Record<Job["workflow"], (job: Job, deps: WorkerDeps) => Promise<Outcome>> = {
   concept_report: runConcept,
   concept_video: runConcept,

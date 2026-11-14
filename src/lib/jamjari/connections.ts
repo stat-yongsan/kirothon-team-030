@@ -1,6 +1,7 @@
 // 외부 연결 상태. 값은 환경변수·워커 점검 결과로만 판정하고, 연결되지 않은 것을 연결됐다고 표시하지 않는다.
 import fs from "node:fs";
 import path from "node:path";
+import { readCalendarConfig } from "./calendar.ts";
 import { readBeat } from "./store.ts";
 
 export type ConnState = "connected" | "not_configured" | "unsupported" | "unknown" | "down";
@@ -49,15 +50,17 @@ export function listConnections(env: Record<string, string | undefined> = proces
     {
       id: "calendar",
       label: "Google Calendar",
-      state: "not_configured",
-      detail: "Calendar MCP·OAuth 미연결 — 일정은 코드 판정까지 하고 등록하지 않습니다(일정 URL 없음).",
+      state: readCalendarConfig(env) ? "unknown" : "not_configured",
+      detail: readCalendarConfig(env)
+        ? "refresh token 설정됨 — 일정이 확정되면 전날·당일 알림과 함께 등록합니다. 실제 생성 여부는 작업 결과의 일정 URL로 확인하세요."
+        : "Google 동의(refresh token) 없음 — node scripts/google-auth.mjs 실행 전까지 일정은 코드 판정까지만 하고 등록하지 않습니다(일정 URL 없음).",
     },
     {
       id: "notion",
       label: "Notion 날짜별 기록",
       state: notionConfigured(env) ? "unknown" : "not_configured",
       detail: notionConfigured(env)
-        ? "토큰 설정됨 — 실제 동기화는 작업별 결과에서 확인하세요(이번 버전 실연동 미검증)."
+        ? "토큰 설정됨 — 루트 › 날짜 › 경로 › 작업 순으로 기록합니다. 작업별 성공 여부는 결과의 Notion 상태에서 확인하세요."
         : "NOTION_TOKEN·NOTION_ROOT_PAGE_ID 없음 — 결과는 앱에 먼저 보관합니다.",
     },
     {
@@ -70,6 +73,5 @@ export function listConnections(env: Record<string, string | undefined> = proces
         : hyperframesInstalled()
         ? "로컬에서 MP4를 만듭니다(계정·API 키 불필요, 내레이션·음악 없음). 첫 렌더는 폰트·GSAP를 내려받느라 인터넷이 필요합니다."
         : "hyperframes 패키지가 없습니다 — npm install 후 사용할 수 있습니다.",
-    },
-  ];
+    },  ];
 }

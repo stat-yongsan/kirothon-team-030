@@ -14,10 +14,10 @@ export interface SampleCapture {
 }
 
 export const SAMPLE_CAPTURES: SampleCapture[] = [
-  { id: "concept", label: "개념: RAG가 뭐지?", purpose: "concept", output: "html", text: "회의에서 들은 RAG. 우리 팀 문서 검색에 쓸 수 있나?" },
-  { id: "idea", label: "아이디어: 점심 메뉴 피로", purpose: "idea", output: "html", text: "직장인 점심 메뉴 고르는 데 매일 10분씩 쓴다. 이걸 줄이는 서비스" },
+  { id: "concept", label: "개념잡기", purpose: "concept", output: "html", text: "회의에서 들은 RAG. 우리 팀 문서 검색에 쓸 수 있나?" },
+  { id: "idea", label: "아이디어 확장하기", purpose: "idea", output: "html", text: "직장인 점심 메뉴 고르는 데 매일 10분씩 쓴다. 이걸 줄이는 서비스" },
   { id: "proto", label: "체험: 점심 메뉴 고르기", purpose: "idea", output: "prototype", text: "인원·예산·못 먹는 음식을 넣으면 오늘 점심 후보가 바로 좁혀지는 페이지" },
-  { id: "schedule", label: "일정: 포스터 문구", purpose: "schedule", output: "calendar", text: "AI 실무 세미나\n일시: 2026년 11월 20일(금) 15:00–17:00\n장소: 본관 3층 대회의실\n사전 신청 마감: 11월 18일 18:00" },
+  { id: "schedule", label: "일정잡기", purpose: "schedule", output: "calendar", text: "AI 실무 세미나\n일시: 2026년 11월 20일(금) 15:00–17:00\n장소: 본관 3층 대회의실\n사전 신청 마감: 11월 18일 18:00" },
   { id: "bad", label: "잘못된 조합: 요약 + 메모만", purpose: "summary", output: "html", text: "URL 없이 요약을 요청한 예" },
 ];
 

@@ -390,3 +390,128 @@ describe("재시도·샘플 (R2.5, R5.5)", () => {
     expect(getJob(id)?.result?.nextAction).toContain("메모");
   });
 });
+
+describe("Notion 날짜별 기록 (AC-16)", () => {
+  function fakeNotion(failOn?: string) {
+    const calls: { method: string; path: string; body: any }[] = [];
+    const f = async (url: string, init?: RequestInit) => {
+      const path = url.replace("https://api.notion.com/v1", "");
+      const method = init?.method ?? "GET";
+      const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+      calls.push({ method, path, body });
+      if (failOn && path.startsWith(failOn)) return new Response(JSON.stringify({ code: "object_not_found" }), { status: 404 });
+      if (method === "GET") return new Response(JSON.stringify({ results: [], has_more: false, next_cursor: null }), { status: 200 });
+      const n = calls.filter((c) => c.method === "POST").length;
+      return new Response(JSON.stringify({ id: `page${n}`, url: `https://www.notion.so/page${n}` }), { status: 200 });
+    };
+    return { f, calls };
+  }
+  const notionEnv = { NOTION_TOKEN: "secret_test", NOTION_ROOT_PAGE_ID: "aaaa-bbbb" };
+
+  it("루트 › 날짜 › 경로 › 작업 순서로 만들고 페이지 URL을 결과에 남긴다", async () => {
+    const id = queued({ purpose: "idea", output: "html", text: "점심 메뉴 아이디어" });
+    const n = fakeNotion();
+    const d = { ...deps(fakeKiro([SAMPLE_IDEAS])), env: notionEnv, notionFetch: n.f };
+    expect(await processJob(id, d)).toBe("completed");
+    const r = getJob(id)!.result!;
+    expect(r.notionSyncStatus).toBe("synced");
+    expect(r.notionPageUrl).toBe("https://www.notion.so/page3");
+    const posts = n.calls.filter((c) => c.method === "POST");
+    expect(posts).toHaveLength(3);
+    expect(posts[0].body.parent.page_id).toBe("aaaabbbb");
+    expect(posts[0].body.properties.title.title[0].text.content).toBe(getJob(id)!.captureDate);
+    expect(posts[1].body.parent.page_id).toBe("page1");
+    expect(posts[2].body.parent.page_id).toBe("page2");
+    expect(posts[2].body.children.length).toBeGreaterThan(0);
+    expect(JSON.stringify(n.calls)).not.toContain("secret_test");
+  });
+
+  it("Notion 오류는 결과를 실패로 만들지 않고 failed 상태와 사유만 남긴다", async () => {
+    const id = queued({ purpose: "idea", output: "html", text: "점심 메뉴 아이디어" });
+    const n = fakeNotion("/blocks");
+    const d = { ...deps(fakeKiro([SAMPLE_IDEAS])), env: notionEnv, notionFetch: n.f };
+    expect(await processJob(id, d)).toBe("completed");
+    const r = getJob(id)!.result!;
+    expect(r.notionSyncStatus).toBe("failed");
+    expect(r.notionPageUrl).toBeUndefined();
+    expect(r.coverageNotes.join(" ")).toContain("Notion 기록 실패");
+  });
+});
+describe("Google Calendar 생성 (R3.9)", () => {
+  const calEnv = { GOOGLE_CALENDAR_CLIENT_ID: "cid", GOOGLE_CALENDAR_CLIENT_SECRET: "csec", GOOGLE_CALENDAR_REFRESH_TOKEN: "rtok" };
+  const TEXT = "AI 실무 세미나 2026년 11월 20일 15:00";
+
+  function fakeGoogle(opts: { tokenStatus?: number; eventStatus?: number } = {}) {
+    const calls: { url: string; method: string; body: any }[] = [];
+    const f = async (url: string, init?: RequestInit) => {
+      const method = init?.method ?? "GET";
+      const raw = init?.body;
+      const body = raw instanceof URLSearchParams ? Object.fromEntries(raw) : raw ? JSON.parse(String(raw)) : undefined;
+      calls.push({ url, method, body });
+      if (url.includes("oauth2.googleapis.com")) {
+        return opts.tokenStatus && opts.tokenStatus !== 200
+          ? new Response(JSON.stringify({ error: "invalid_grant" }), { status: opts.tokenStatus })
+          : new Response(JSON.stringify({ access_token: "at" }), { status: 200 });
+      }
+      const status = opts.eventStatus ?? 200;
+      if (status === 409 && method === "POST") return new Response("{}", { status: 409 });
+      if (status >= 500) return new Response("{}", { status });
+      return new Response(JSON.stringify({ id: "evt1", htmlLink: "https://www.google.com/calendar/event?eid=abc", status: "confirmed" }), { status: 200 });
+    };
+    return { f, calls };
+  }
+
+  it("연결되면 이벤트를 만들고 실제 URL·전날 1440분·당일 0분 알림을 남긴다", async () => {
+    const id = queued({ purpose: "schedule", output: "calendar", text: TEXT });
+    const g = fakeGoogle();
+    expect(await processJob(id, { ...deps(fakeKiro([SAMPLE_SCHEDULE])), env: calEnv, calendarFetch: g.f })).toBe("completed");
+    const r = getJob(id)!.result!;
+    expect(r.status).toBe("completed");
+    expect(r.artifactUrl).toBe("https://www.google.com/calendar/event?eid=abc");
+    expect(r.providerResourceId).toBe("evt1");
+    const post = g.calls.find((c) => c.method === "POST" && c.url.includes("/events"))!;
+    expect(post.body.reminders).toEqual({
+      useDefault: false,
+      overrides: [
+        { method: "popup", minutes: 1440 },
+        { method: "popup", minutes: 0 },
+      ],
+    });
+    expect(post.body.start.timeZone).toBe("Asia/Seoul");
+    expect(post.body.start.dateTime).toBe("2026-11-20T06:00:00.000Z");
+    expect(post.body.id).toMatch(/^jjr[0-9a-f]{28}$/);
+    expect(JSON.stringify(r)).not.toContain("rtok");
+  });
+
+  it("같은 이벤트 ID가 이미 있으면(409) 새로 만들지 않고 기존 일정을 쓴다", async () => {
+    const id = queued({ purpose: "schedule", output: "calendar", text: TEXT });
+    const g = fakeGoogle({ eventStatus: 409 });
+    expect(await processJob(id, { ...deps(fakeKiro([SAMPLE_SCHEDULE])), env: calEnv, calendarFetch: g.f })).toBe("completed");
+    expect(getJob(id)!.result!.coverageNotes.join(" ")).toContain("기존 일정을 다시 찾았습니다");
+    expect(g.calls.filter((c) => c.method === "POST" && c.url.includes("/events"))).toHaveLength(1);
+  });
+
+  it("인증이 거부되면 일정 URL 없이 외부 조치 대기와 다음 행동", async () => {
+    const id = queued({ purpose: "schedule", output: "calendar", text: TEXT });
+    const g = fakeGoogle({ tokenStatus: 400 });
+    expect(await processJob(id, { ...deps(fakeKiro([SAMPLE_SCHEDULE])), env: calEnv, calendarFetch: g.f })).toBe("awaiting_external_action");
+    const r = getJob(id)!.result!;
+    expect(r.providerResourceId).toBeUndefined();
+    expect(r.errors.map((e) => e.code)).toContain("calendar_auth_failed");
+    expect(r.nextAction).toContain("google-auth");
+  });
+
+  it("Google 서버 오류(5xx)는 재시도 예약", async () => {
+    const id = queued({ purpose: "schedule", output: "calendar", text: TEXT });
+    const g = fakeGoogle({ eventStatus: 503 });
+    expect(await processJob(id, { ...deps(fakeKiro([SAMPLE_SCHEDULE])), env: calEnv, calendarFetch: g.f })).toBe("scheduled");
+  });
+
+  it("샘플 작업은 연결돼 있어도 Calendar를 호출하지 않는다", async () => {
+    const id = queued({ purpose: "schedule", output: "calendar", text: TEXT, sample: true });
+    const g = fakeGoogle();
+    await processJob(id, { ...deps(fakeKiro([])), env: calEnv, calendarFetch: g.f });
+    expect(g.calls).toHaveLength(0);
+    expect(getJob(id)!.result!.providerResourceId).toBeUndefined();
+  });
+});

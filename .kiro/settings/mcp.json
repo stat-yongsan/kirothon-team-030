@@ -2,9 +2,28 @@
   "mcpServers": {
     "playwright": {
       "command": "cmd",
-      "args": ["/d", "/c", "npx", "-y", "@playwright/mcp@0.0.85", "--browser", "msedge", "--isolated"],
+      "args": [
+        "/d",
+        "/c",
+        "npx",
+        "-y",
+        "@playwright/mcp@0.0.85",
+        "--browser",
+        "msedge",
+        "--isolated"
+      ],
       "disabled": false,
       "autoApprove": []
+    },
+    "google-calendar": {
+      "command": "node",
+      "args": [
+        "scripts/calendar-mcp.mjs"
+      ],
+      "disabled": false,
+      "autoApprove": [
+        "list_events"
+      ]
     }
   }
 }

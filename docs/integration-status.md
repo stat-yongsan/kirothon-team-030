@@ -14,8 +14,8 @@
 | 워커 재시작 복구 | **동작** | 실행 중 강제 종료 → 새 워커가 lease 만료 뒤 재점유, 끝난 단계 재실행 없음(4절) |
 | Anthropic API | 미사용(키 없음) | `.env.local`의 `ANTHROPIC_API_KEY` 비어 있음. 생성은 kiro-cli가 맡음 |
 | Google 로그인 | 미구성 | OAuth 클라이언트 없음. 화면에 "미구성"으로 표시 |
-| Google Calendar | 미구성 | W6는 일정 URL을 만들지 않고 `awaiting_external_action` |
-| Notion | 미구성 | 모든 결과 `notionSyncStatus: not_configured`, 결과는 앱에 보관 |
+| Google Calendar | **동작 (REST 토큰, 16:21 재확인)** | refresh token으로 `calendars/primary/events` 생성·조회·삭제. 토큰 스코프는 `calendar.events`뿐이라 `calendarList` 조회는 403(일정 생성에는 무관). MCP(`google-calendar`)는 쓰지 않아 `.kiro/settings/mcp.json`에서 뺐다 |
+| Notion | **동작 (16:21 재확인)** | `잠자리채 › 날짜 › 경로 › 작업` 페이지 생성·블록 조회 200. 입력 단계에서 실패한 작업은 기록하지 않고 `not_configured`로 남는다(6절 W1 사진 행) |
 | W2 영상 렌더(HyperFrames) | **사용 가능 (15:58 확인)** | Gemini Notebook 공개 API에 영상 생성이 없어 15:50에 교체. skills.sh `heygen-com/hyperframes` 스킬(`.kiro/skills/hyperframes`, Apache-2.0)과 `hyperframes@0.9.43` 로컬 CLI로 MP4를 만든다. 계정·API 키 없음, 내레이션·음악 없음. 첫 렌더는 Noto Sans KR·GSAP를 인터넷에서 받는다 |
 | 웹페이지 본문 수집(W5) | **동작 (13:40)** | URL 수집기가 위키백과 본문 6,359자를 읽고 kiro-cli가 요약(2절) |
 | YouTube 자막·프레임(W5) | **동작 (13:45 수정 후)** | yt-dlp 자막(en) 6줄 + ffmpeg 실제 프레임 6장. 13:42 첫 실행은 프레임 0장이었음(3.3절) |
@@ -107,6 +107,14 @@ W5 유튜브 결과는 설계대로 `partial`이다. 요약 근거는 자막뿐�
 - 증상: Next 서버는 `.env.local`을 읽어 연결 상태에 "토큰 설정됨"을 보이지만, 워커는 `node`로 직접 실행돼 `NOTION_TOKEN`·`GOOGLE_CALENDAR_*`가 없다. 이 상태로 맡기면 Notion `not_configured`, Calendar "연결 없음"으로 끝난다(화면과 워커 판정 불일치).
 - 수정: `package.json` `worker` 스크립트에 `--env-file-if-exists=.env.local`(Node 22.19, 파일이 없어도 계속 실행). `quality.mjs task` PASS(16:14).
 
+### 3.9 kiro-cli "캘린더 확인"이 로그인을 끝내지 못함 (16:13·16:15 실패, 16:25 수정)
+
+- 증상: kiro 대화에서 Google 공식 Calendar MCP(`calendarmcp.googleapis.com/mcp/v1`)를 부르면 브라우저 동의 뒤 실패하거나 "MCP connection closed before sign-in"으로 끝났다.
+- 원인 1(16:13, `~/.kiro/logs/…/mcp.log`): Google 동의와 콜백은 성공했으나 토큰 교환이 `400 invalid_request`. kiro-cli 3.3.0의 MCP `oauth` 설정은 `clientId`·`redirectUri`·`clientMetadataUrl`만 읽고 `clientSecret`은 무시한다(설치본 `acp-server.js`에서 확인). Google 토큰 서버는 client secret을 요구하므로 이 버전에서는 몇 번을 다시 해도 끝나지 않는다.
+- 원인 2(16:15): 로그인 대기 중에 다른 kiro 세션이 `mcp.json`에서 `google-calendar`를 지워(16:16:18) 연결이 닫혔다.
+- 수정: `scripts/calendar-mcp.mjs`(의존성 없는 stdio MCP, 읽기 전용 `list_events`)를 `.kiro/settings/mcp.json`의 `google-calendar`로 등록했다. W6와 같은 `.env.local` refresh token(`scripts/google-auth.mjs`로 발급)으로 Calendar REST를 조회한다. 브라우저 로그인이 필요 없고 토큰은 출력하지 않는다.
+- 확인: stdio 직접 호출로 11/14–12/1 일정 6건(W6 일정 1건 `[잠자리채]` 표시), 잘못된 날짜는 `isError`. `kiro-cli chat --v3 --no-interactive --trust-tools=@google-calendar` 16초 exit 0, 도구 호출 후 6건 답변(16:24). 신뢰 옵션 없는 비대화형 실행은 권한 승인 불가로 거부됐다(`autoApprove` 미적용). 대화형에서는 처음 한 번 승인이 필요하다. 대화형 화면에서 직접 확인하지는 않았다.
+
 ## 4. 재시작 복구 실증 (R2.3, R2.4)
 
 `j_ffefff1abb396176` 기록(UTC):
@@ -125,15 +133,31 @@ W5 유튜브 결과는 설계대로 `partial`이다. 요약 근거는 자막뿐�
 
 ## 5. 실행하지 않은 것
 
-- W2 영상: 샘플 작업 1건만 실제 렌더로 끝까지 확인했다(아래 기록). kiro-cli 실제 조사 결과로 렌더한 W2는 아직 실행하지 않았다. 렌더 실패 시 부분 완료 처리는 코드 테스트로만 확인.
+- W2 영상: kiro-cli 실제 조사 → 렌더는 16:04–16:09에 1건 확인(6절). 렌더 실패 시 부분 완료 처리는 코드 테스트로만 확인.
 - W5 유튜브: 요약까지 간 영상은 19초짜리 1개뿐이다. 20분 초과·없는 영상 거부는 14:29 실제 확인, 자막 없음은 자동 테스트만.
-- W6 실제 Calendar 등록: Calendar 미구성이라 하지 않았다. 질문 → 답변 → 재개 경로는 14:28–14:40에 실제로 확인했다(2절).
-- Notion 기록, Google 로그인: 연결 정보 없음.
+- W6 실제 Calendar 등록: 16:10에 1건 확인(6절). 이미지·URL만으로 된 일정 입력은 확인하지 않았다(이미지 분석 미연결).
+- Google 로그인: 연결 정보 없음.
+
+## 6. 6경로 실연동 점검 (16:02–16:13, 화면에서 담기 → 바로 정리)
+
+워커 `w_ebd64ce4`(pid 32748, `.env.local` 로드, 로그 `.data/worker10.out.log`). Notion 페이지는 앱 토큰으로 REST 조회해 `잠자리채 › 2026-11-14 › {경로} › {작업}` 위치와 블록을 확인했다. Calendar 일정은 Calendar API로 다시 조회했다.
+
+| 경로 | 작업 | 입력 | 결과 | 시간 | Notion |
+|---|---|---|---|---|---|
+| W1 | `j_7ecaed56c1ab51ab` | 메모 "확산 모델" | completed, HTML(정의·원리·역사 2015–2026·최근 논문 2편·출처 6/6 응답) | 58초 | synced(블록 19) |
+| W1 | `j_16211208748b6b3e` | URL(위키백과 RAG) | completed, 본문 20,000자 + 검색 2회, 출처 4/4 | 44초 | synced |
+| W1 | `j_d825de979076fe8b` | 사진만 | failed `no_readable_input`(이미지 분석 미연결) | 0초 | not_configured |
+| W2 | `j_efb89e3a34396869` | 메모 "확산 모델" | completed, MP4 61초 1920×1080 장면 8개(브라우저 재생·프레임 확인) | 313초 | synced(영상 링크는 Notion에 없음) |
+| W3 | `j_bc775c53ccde29af` | 메모 1줄 | completed, 아이디어 5개 HTML | 35초 | synced |
+| W4 | `j_0d64fb37fbb322a7` | 메모 "팀 회식 날짜 정하기 투표" | completed, `/p/…` 버튼 클릭 시 득표 1/5→2/5 갱신 확인 | 27초 | synced |
+| W5 | `j_fefa7401bb62d4c5` | 유튜브 jNQXAC9IVRw | partial(자막 근거, 프레임 6장·시점 링크 6개) | 40초 | synced |
+| W6 | `j_324d93d916dde5c6` | 메모(11/20 19–21시 스터디) | completed, Google Calendar 일정 생성(팝업 1440분 전·0분), htmlLink 반환 | 11초 | synced |
+- 16:21 W6 재확인 `j_0b396c93a3034a50`(2026-11-20 15:00–15:30 Asia/Seoul 테스트 일정): 12초 completed. Calendar API 직접 조회로 `confirmed`·시작/종료 시각·알림 0분/1440분, Notion API로 페이지 블록 11개를 확인했다. 확인 뒤 테스트 일정은 삭제(204)하고 Notion 페이지는 보관 처리(archived)했다. 별도 워커 중복 기동은 하나를 종료했다.
 - 생성된 체험 페이지의 버튼 자동 클릭 검사: 워커는 하지 않는다. 위 표의 W4 1건만 사람이 브라우저에서 눌러 확인했다.
 
 ## 7. Vercel 공개 시연판 (16:25–16:42)
 
 - 주소: https://jamjarichae.vercel.app (프로젝트 `jamjarichae`, `npx vercel@50 deploy --prod`, 런타임 환경변수 `JAMJARI_DATA_DIR=demo-data/jamjarichae`만 설정. Notion·Google 비밀값은 올리지 않음)
-- 동작: `http.ts` guard가 Vercel에서 쓰기만 503 `public_demo`로 거부하고 읽기는 허용. `demo-data/jamjarichae`에 16:02–16:13 실제 실행 결과 7건(사진 실패 건 제외)과 결과물 8개(HTML 7·MP4 1, 4.2MB)를 넣었다. W6 일정 링크(계정 이메일 포함)·Notion 링크는 스냅샷에서 지웠다. 메인 화면 상단에 "공개 시연판 · 결과 보기 전용" 안내, 연결 상태의 영상 렌더는 Vercel에서 `unsupported`.
+- 동작: `http.ts` guard가 Vercel에서 쓰기만 503 `public_demo`로 거부하고 읽기는 허용. `demo-data/jamjarichae`에 6절 결과 7건(사진 실패 건 제외)과 결과물 8개(HTML 7·MP4 1, 4.2MB)를 넣었다. W6 일정 링크(계정 이메일 포함)·Notion 링크는 스냅샷에서 지웠다. 메인 화면 상단에 "공개 시연판 · 결과 보기 전용" 안내, 연결 상태의 영상 렌더는 Vercel에서 `unsupported`.
 - 업로드 제외: `.vercelignore` 허용 목록(`src`, `demo-data`, 설정 파일만). 첫 시도는 루트 설치 파일(.exe)까지 599.5MB가 올라가 "File size limit exceeded"로 배포 실패(배포 생성 전 중단), 두 번째는 프레임워크 미지정으로 실패 → `vercel.json` `framework: nextjs`로 해결.
 - 확인(로그인 없이, 16:38–16:42): 메인·`/api/jamjari/jobs`(작업 7개)·결과 HTML 6개·W4 체험·`/v/…` MP4 모두 200. 브라우저에서 담기 → "공개 시연판은 결과 보기 전용" 오류 표시, 영상 재생(61초·1920px), W4 버튼 클릭 시 6/19 득표 1/5→2/5.

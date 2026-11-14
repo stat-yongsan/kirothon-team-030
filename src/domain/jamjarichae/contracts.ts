@@ -194,7 +194,7 @@ export function validateCapture(input: CaptureInput): CaptureCheck {
   const KIND_LABEL: Record<InputKind, string> = { text: "메모", url: "URL", image: "이미지" };
   if (notAllowed.length > 0) {
     errors.push(
-      `${workflow.code} ${PURPOSE_LABEL[workflow.purpose]}·${workflow.outputLabel}은(는) ${workflow.allowed
+      `${PURPOSE_LABEL[workflow.purpose]}·${workflow.outputLabel}은(는) ${workflow.allowed
         .map((k) => KIND_LABEL[k])
         .join("·")}만 받습니다. ${notAllowed.map((k) => KIND_LABEL[k]).join("·")}을(를) 빼 주세요.`,
     );

@@ -14,10 +14,10 @@ export async function GET(request: Request) {
   if (denied) return denied;
   try {
     const jobs = listJobs()
-      .filter((j) => j.userId === OWNER)
+      .filter((j) => j.userId === OWNER && !j.hidden)
       .map(toView);
     return Response.json(
-      { jobs, briefing: buildBriefing(jobs), connections: listConnections(), now: new Date().toISOString() },
+      { jobs, briefing: buildBriefing(jobs.filter((j) => !j.acknowledgedAt)), connections: listConnections(), now: new Date().toISOString() },
       { headers: { "cache-control": "no-store" } },
     );
   } catch (error) {

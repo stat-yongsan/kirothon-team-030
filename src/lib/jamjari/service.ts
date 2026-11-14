@@ -112,3 +112,15 @@ export function cancel(id: string, now = new Date()): Job {
     pushHistory(j, wasRunning ? "취소(다음 단계 경계에서 멈춤, 만든 외부 자원은 삭제하지 않음)" : "취소", now);
   }) as Job;
 }
+
+/** 아침에 결과를 확인했다고 표시한다. 결과가 있는 끝난 작업만(답변 대기·진행 중은 불가) */
+export function acknowledge(id: string, now = new Date()): Job {
+  const job = mustGet(id);
+  const finished = ["completed", "partial", "failed", "awaiting_external_action", "awaiting_external_confirmation"].includes(job.status);
+  if (!finished || !job.result) throw new ServiceError(409, "not_finished", "결과가 나온 작업만 확인완료로 표시할 수 있습니다.");
+  return updateJob(id, (j) => {
+    if (j.acknowledgedAt) return false;
+    j.acknowledgedAt = now.toISOString();
+    pushHistory(j, "확인완료 → 전체 결과함", now);
+  }) as Job;
+}
