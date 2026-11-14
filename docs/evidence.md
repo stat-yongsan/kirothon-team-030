@@ -47,7 +47,7 @@
 |---|---|
 | kiro-cli 개발 세션 | `sess_4f861dd9-…`(11:04–13:10 KST, 모델 `claude-opus-5.5`, effort `xhigh`, specWorkflow `quick`), 이어서 `sess_b4b2809d-…`(13:11–). 세션 메타데이터 `~/.kiro/sessions/90aa50a40ee50e6b/*/session.json` |
 | Spec | `.kiro/specs/jamjarichae/requirements.md` → `design.md` → `tasks.md`. 작업 8개 중 체크는 `node scripts/quality.mjs task` PASS 뒤에만 |
-| Steering | `.kiro/steering/`(product·structure·tech·api·ui·ship·kickoff)와 `AGENTS.md` |
+| Steering | `.kiro/steering/`(product·structure·tech·ui)와 `AGENTS.md`. 14:05 연습 템플릿 정리 때 잠자리채 기준으로 고침 |
 | Agents | `.kiro/agents/builder.json`, `reviewer.json`, `demo-editor.json` |
 | MCP | `.kiro/settings/mcp.json`의 Playwright MCP(Edge)로 화면·체험 페이지·CSP 확인 |
 | 런타임 엔진 | 앱이 작업마다 `kiro-cli chat --v3 --no-interactive`를 실행. 실제 작업 9건(W1 3·W3 1·W4 1·W5 3·W6 1), kiro-cli 실행 11회(재시도 포함) |
@@ -57,10 +57,11 @@
 ## 3. 검사 결과
 
 - `node scripts/quality.mjs task`: PASS(13:26)
-- 테스트: 167개 통과(파일 14개). 잠자리채 112개: domain 48, lib 44, api 20
+- 테스트: 112개 통과(파일 8개): domain 48, lib 44, api 20. 14:05에 연습 템플릿 테스트 55개(파일 6개)를 코드와 함께 지움. 그 전에는 167개
 - `node scripts/quality.mjs release --force`: 아래 4절에 최종 결과 기록
 
 ## 4. 최종 release 검사
 
 - `node scripts/quality.mjs release --force`: **PASS** (2026-11-14 13:34:17 KST) — lint 8.4초, typegen 1.5초, typecheck 4.7초, test 4.2초, build 13.4초
 - 13:44 `youtube.ts` 포맷 선택식 수정 후 `quality.mjs task` PASS(13:47), `release --force` **PASS** (13:50:20 KST) — lint 8.6초, typegen 1.4초, typecheck 4.6초, test 4.3초, build 13.8초
+- 14:05 연습 템플릿 삭제(코드·테스트 55개·의존성 3개) 후 `quality.mjs task` PASS, `release --force` **PASS** (14:13:05 KST) — lint 8.9초, typegen 1.5초, typecheck 4.1초, test 3.9초(112개), build 17.2초. 삭제 직후(14:07) 메인 화면을 브라우저로 다시 열어 브리핑·워커 상태 표시 확인

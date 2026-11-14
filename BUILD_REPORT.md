@@ -1,6 +1,6 @@
 # BUILD REPORT
 
-> 잠자리채, 2026-11-14 KST. 개발 도구는 kiro-cli 3.3(V3 엔진), 모델은 `claude-opus-5.5`입니다. 이 문서에는 실제로 실행하고 기록이 남은 것만 적었습니다. 세부 근거는 [docs/evidence.md](docs/evidence.md)와 [docs/integration-status.md](docs/integration-status.md)에 있습니다.
+> 잠자리채, 2026-11-14 KST. 개발 도구는 kiro-cli 3.3(V3 엔진), 개발 세션 모델은 `claude-opus-5.5`입니다. 앱이 런타임에 실행하는 kiro-cli는 모델을 지정하지 않아 Auto로 동작합니다(런타임 세션 기록 `modelId: auto`). 이 문서에는 실제로 실행하고 기록이 남은 것만 적었습니다. 세부 근거는 [docs/evidence.md](docs/evidence.md)와 [docs/integration-status.md](docs/integration-status.md)에 있습니다.
 
 ## Kiro 활용 내역
 
@@ -12,10 +12,10 @@
 | 구현 | Spec (tasks) + kiro-cli 에이전트 | 작업 8개를 순서대로 구현했습니다. 각 작업은 `node scripts/quality.mjs task`가 PASS를 출력한 뒤에만 `[x]`로 표시했습니다 | `.kiro/specs/jamjarichae/tasks.md`, `src/domain/jamjarichae/`, `src/lib/jamjari/` |
 | 구현 | kiro-cli headless를 앱의 런타임 엔진으로 사용 | 워커가 작업마다 `kiro-cli chat --v3 --no-interactive`를 작업별 빈 폴더에서 실행합니다. 입력은 stdin으로 넘기고, 신뢰 도구는 경로별로 고정합니다(W1·W2만 `remote_web_search`, `web_fetch`). 실제 작업 9건, kiro-cli 실행 11회(재시도 포함) | `src/lib/jamjari/kiro.ts`, `prompts.ts`, `worker.ts` |
 | 구현 | 외부 Agent Skill 절차 이식 | jwynia `brainstorming`(W3)과 kar2phi `video-lens`(W5) 절차를 headless 프롬프트와 코드 검사로 옮겼습니다. 커밋과 라이선스를 기록했습니다 | `docs/skill-adapters.md` |
-| 검증 | 품질 스크립트 | `quality.mjs task`(typegen·typecheck·test)와 `release --force`(lint·typegen·typecheck·test·build)를 실행했습니다. 테스트는 167개(잠자리채 112개)이고, 마지막 release는 13:50:20에 PASS했습니다 | `scripts/quality.mjs`, `*.test.ts` |
+| 검증 | 품질 스크립트 | `quality.mjs task`(typegen·typecheck·test)와 `release --force`(lint·typegen·typecheck·test·build)를 실행했습니다. 테스트는 112개(파일 8개)입니다. 마지막 검사 시각과 결과는 `docs/evidence.md` 4절에 있습니다 | `scripts/quality.mjs`, `*.test.ts` |
 | 검증 | MCP (Playwright, Edge) | 실제 브라우저로 확인했습니다. 담기 → 맡기기 → 브리핑 → HTML 열기·다운로드, 잘못된 조합 안내, 보고서 CSP·스크립트 0개, 체험 iframe의 origin null·쿠키 SecurityError·버튼 동작, 유튜브 보고서의 프레임 6장·시점 링크, 390px 가로 넘침(수정함) | `.kiro/settings/mcp.json`, `docs/integration-status.md` |
-| 검증 | kiro-cli 세션 로그 분석 | 런타임 kiro-cli 세션 로그(`messages.jsonl`)를 읽어 실패 원인 2개를 찾았습니다. 웹 검색 도구가 전부 거부된 문제와 형식 오류(목록 7개 > 상한 6개)입니다 | `docs/integration-status.md` 3절 |
-| 기타 | Steering, Custom agents, 인계 파일 | 공통 규칙(`AGENTS.md`)과 steering 7개(product·structure·tech·api·ui·ship·kickoff)를 두었습니다. 에이전트는 builder·reviewer·demo-editor입니다. 컨텍스트가 줄 때마다 인계 파일을 갱신해 세션 3개(`sess_4f861dd9`, `sess_b4b2809d`, `sess_5b231bf0`)를 이어 갔습니다 | `.kiro/steering/`, `.kiro/agents/`, `docs/HANDOFF_JAMJARICHAE.md` |
+| 검증 | kiro-cli 세션 로그 분석 | 런타임 kiro-cli 세션 로그(`messages.jsonl`)를 읽어 실패 원인 2개를 찾았습니다. 웹 검색 도구가 전부 거부된 문제와 형식 오류(목록 7개 > 상한 6개)입니다. 유튜브 프레임 0장은 같은 명령을 직접 재실행해 원인을 찾았습니다 | `docs/integration-status.md` 3절 |
+| 기타 | Steering, Custom agents, 인계 파일 | 공통 규칙(`AGENTS.md`)과 steering 4개(product·structure·tech·ui)를 잠자리채 기준으로 고정했습니다. 에이전트는 builder(구현, 저장·턴 종료 Hook으로 `quality.mjs` 실행)·reviewer(읽기 전용)·demo-editor(문서)입니다. 컨텍스트가 줄 때마다 인계 파일을 갱신해 세션 3개(`sess_4f861dd9`, `sess_b4b2809d`, `sess_5b231bf0`)를 이어 갔습니다 | `.kiro/steering/`, `.kiro/agents/`, `docs/HANDOFF_JAMJARICHAE.md` |
 
 ## 개발 과정에서 바뀐 점
 
@@ -23,6 +23,7 @@
 - **작업 방식**: 전날 준비한 템플릿 절차(change-topic) 대신 Kiro Spec 방식(requirements → design → tasks)으로 진행했습니다. 3시간 제출 기준에 맞춰 Quick Spec으로 줄였습니다.
 - **DB 없음 규칙과 영속 큐**: 새 DB 의존성 없이 작업별 JSON 파일, `wx` 잠금, 임시 파일 rename, lease로 로컬 영속 큐를 만들었습니다. 그 대가로 Vercel 배포본에서는 큐가 동작하지 않습니다.
 - **미연결 기능 처리**: Google Calendar·Notion·Notebook 영상은 연결 정보나 공개 API가 없습니다. 이 단계들은 가짜 URL을 만들지 않고 "외부 조치 필요", "미연결"로 멈추게 설계를 바꿨습니다.
+- **연습 템플릿 정리**: 대회 전날 준비한 연습 주제(비교과 결과보고서 검증) 코드, Anthropic 어댑터, change-topic 등 skills·workflows·데모 Power, 연습용 steering 3개와 문서는 오늘 쓰지 않아 제출 전에 지웠습니다. 쓰지 않는 의존성(`@anthropic-ai/sdk`, `papaparse`)도 뺐습니다.
 - **UI**: 처음 제안은 깊은 밤 남색 계열이었습니다. 사용자가 준 참고 이미지에 맞춰 네오 브루탈리즘(굵은 테두리, 하드 그림자, 노랑·분홍·보라·초록)으로 바꿨습니다.
 
 ## 어려웠던 점과 해결 방법

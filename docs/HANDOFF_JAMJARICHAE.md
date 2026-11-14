@@ -1,6 +1,6 @@
 # 잠자리채 작업 인계 (새 세션은 이 파일부터 읽는다)
 
-갱신: 2026-11-14 13:59 KST(kiro-cli 세션 `sess_5b231bf0`, W5·W6 실제 실행 + release PASS + 제출 레포 push). 이전: 13:36 세션 `sess_b4b2809d`. 제출 18:00(사용자 자료 기준, 현장 재확인).
+갱신: 2026-11-14 14:15 KST(kiro-cli 세션 `sess_5b231bf0`, W5·W6 실제 실행, 제출 레포 push, 연습 템플릿 삭제·README 완성). 이전: 13:36 세션 `sess_b4b2809d`. 제출 18:00(사용자 자료 기준, 현장 재확인).
 
 > 지금 실행 중: dev 서버(cmd pid 20656, http://localhost:3000), 워커 npm pid 20916 / node pid 33668(로그 `.data/worker6.out.log`, 13:44 youtube.ts 수정 반영). 진단 스크립트 `.data/diag-*.ts`, `.data/diag-submit.mjs`(담기+맡기기 API 호출, git 제외).
 
@@ -11,7 +11,7 @@
 3. `.kiro/specs/jamjarichae/requirements.md` → `design.md` → `tasks.md` (Quick Spec, 활성 Spec)
 4. 이 파일의 4절(남은 작업)
 
-`challenge.md`(원본 양식)는 수정하지 않는다. `.kiro/specs/mvp/`와 `src/domain/program-report.ts` 등은 어제 템플릿(연습 주제)이라 참고만 한다.
+어제 연습 템플릿(`challenge.md`, `.kiro/specs/mvp/`, `src/domain/program-report.ts`, `src/lib/ai`, skills·workflows·powers 등)은 14:05 사용자 지시로 삭제했다(5절 참고).
 
 ## 2. 사용자 확정 사항
 
@@ -73,7 +73,14 @@ git: 어제 연습(job-choice) WIP는 타입 오류가 있어 `git stash@{0}`("p
   - push 전 검사: 비밀값·키·개인 이메일 패턴 0건, 300KB 넘는 파일 없음, `.env.example` 값 비어 있음. 공개 문서에 Vercel 계정 핸들(`docs/SETUP_STATUS.md`, `docs/MANUAL.html`, `docs/PRACTICE_TEMPLATE.md`)은 남아 있음(비밀값 아님, 사용자에게 알림)
   - 로그아웃 상태(web_fetch)로 레포 첫 화면 README 표시 확인
   - AGENTS.md: 제출 원격 `team`, 로컬 `main` → `team/main`만 push, 18:00 마감, 외부 자료는 exclude로 갱신
-- [ ] 제출 남은 것(사용자): README **Demo 줄 영상 링크**, 최상단 **`PRESENTATION.pdf`**, 팀원 이름·역할 표, README 근거·기대 효과의 정량 근거(_보강 예정_ 표시), 18:00 전 마지막 push
+- [ ] 제출 남은 것(사용자): README **Demo 줄 영상 링크**, 최상단 **`PRESENTATION.pdf`**, 18:00 전 마지막 push. 목표: **17:00까지 제출 완료**(사용자 지시, 수정 여유 1시간)
+- [x] **연습 템플릿 삭제 + README 완성 (14:05–14:15, 사용자 지시)**
+  - 삭제(git rm): 연습 주제 코드(`src/domain/{csv,format,current,types,program-report}*`, `examples/`, `fixtures/`, `src/lib/ai`, `src/lib/report`, `src/app/api/draft`, `src/components/{Workbench,AnalysisPanel,DraftPanel,ui}.tsx`), `.kiro/specs/mvp`, `.kiro/skills`, `.kiro/workflows`, steering `kickoff·ship·api`, `powers/`, `docs/{MANUAL.html,RUN_PROMPTS.md,SETUP_STATUS.md,PRACTICE_TEMPLATE.md,examples}`, `scripts/{check-api,doctor}.mjs`, `CLAUDE.md`, `challenge.md`. 의존성 `@anthropic-ai/sdk`·`papaparse`·`@types/papaparse` 제거. Vercel 계정 핸들이 있던 문서도 이때 사라짐
+  - 고침: `AGENTS.md`, steering `product·structure·tech·ui`, agents `builder·reviewer·demo-editor`(잠자리채 Spec 기준), `.env.example`(잠자리채 선택 변수만)
+  - 남김(로컬만, 레포에 없음): `git stash@{0}`(연습 WIP), 브랜치 `kirothon-2026-main`, 루트 `KIRO Basic.pdf` 등 제외 파일, `.env.local`
+  - README: 템플릿 섹션 전부 채움(문제 정의·기능·시나리오 4단계·기대 효과 표·차별점 표·설치·테스트 표·팀). 스크린샷 4장 `docs/images/`(main·briefing·report-w1·prototype, 14:08–14:10 Edge). 팀 표: `stat-yongsan` / 기획·설계·개발·시연(1인) — 이름은 사용자가 바꿀 수 있음
+  - `docs/DEMO.md`: 녹화용 주소 표(결과 주소 7개 HTTP 200 확인 14:10), W5·W6 장면 추가
+  - 검사: 테스트 112개, `quality.mjs task` PASS, lint 통과, `release --force` **PASS(14:13:05)**
 - [ ] Google 로그인(JWT): 사용자 결정 "비밀값은 나중에, 로그인은 나중에 붙이자"(13:5x). OAuth 클라이언트 ID·비밀값 받으면 착수
 
 ## 5. 실행 방법

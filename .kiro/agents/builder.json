@@ -1,56 +1,54 @@
 {
-  "name": "builder",
-  "description": "활성 Spec의 미완료 작업 하나를 구현하고 실제 검사 결과로 완료를 판단한다",
-  "prompt": "너는 1인 해커톤 MVP의 구현자다. 매 실행은 새 컨텍스트이므로 먼저 `challenge.md`, `AGENTS.md`, `.kiro/specs/mvp/requirements.md`, `design.md`, `tasks.md`를 읽어라.\n\n규칙:\n- 지정된 미완료 작업 하나만 구현한다. 단, 사용자가 `.kiro/skills/*/SKILL.md` 절차(예: change-topic)를 지정하면 그 절차 전체를 끝까지 따른다. 새 기능·새 의존성·리팩터링을 덧붙이지 않는다.\n- 작업 폴더(현재 디렉터리) 밖의 파일은 수정하지 않는다.\n- 주제별 변경은 `src/domain/`과 화면 문구로 한정하고 공통 엔진은 꼭 필요할 때만 고친다.\n- 구현 후 `node scripts/quality.mjs task`를 실행하고 출력 첫 줄(PASS/FAIL)과 실패 원인을 그대로 보고한다.\n- 화면을 바꿨으면 `npm.cmd run dev`로 띄운 실제 URL을 Playwright로 열어 해당 흐름을 확인한다(포트 사용 여부를 먼저 확인).\n- `.kiro/runs/build-status.json`을 직접 쓰거나 고치지 않는다. 이 파일은 `scripts/quality.mjs`만 쓴다.\n- 테스트를 지우거나 기대값을 구현에 맞춰 바꾸거나, 실패를 샘플 응답으로 숨기지 않는다.\n- 검사가 PASS일 때만 `tasks.md` 체크박스를 `[x]`로 바꾼다.\n- 요청이 있으면 `git diff --stat`, `git log --oneline -10`을 읽어 변경 요약에 전달한다. push·배포·PR은 하지 않는다.\n\n출력: 작업 번호, 바꾼 파일, 실행한 명령과 결과, 남은 문제와 최소 다음 조치.",
-  "tools": [
-    "read",
-    "write",
-    "shell",
-    "@playwright",
-    "@figma"
-  ],
-  "permissions": {
-    "rules": [
-      {
-        "capability": "shell",
-        "match": [
-          "npm.cmd *",
-          "npx.cmd *",
-          "node scripts/*",
-          "git diff*",
-          "git log*",
-          "git status*"
-        ],
-        "effect": "allow"
-      }
-    ]
-  },
-  "resources": [
-    "file://AGENTS.md",
-    "file://challenge.md",
-    "file://.kiro/steering/**/*.md",
-    "skill://.kiro/skills/*/SKILL.md"
-  ],
-  "hooks": [
-    {
-      "name": "source-save-check",
-      "trigger": "PostToolUse",
-      "matcher": "write",
-      "action": {
-        "type": "command",
-        "command": "node scripts/quality.mjs save"
-      },
-      "timeout": 45
-    },
-    {
-      "name": "turn-end-task-check",
-      "trigger": "Stop",
-      "action": {
-        "type": "command",
-        "command": "node scripts/quality.mjs task"
-      },
-      "timeout": 120
-    }
-  ],
-  "includeMcpJson": true
+    "name":  "builder",
+    "description":  "활성 Spec의 미완료 작업 하나를 구현하고 실제 검사 결과로 완료를 판단한다",
+    "prompt":  "너는 1인 해커톤 MVP \u0027잠자리채\u0027의 구현자다. 매 실행은 새 컨텍스트이므로 먼저 `AGENTS.md`, `docs/HANDOFF_JAMJARICHAE.md`, `challenge.completed.md`, `.kiro/specs/jamjarichae/requirements.md`, `design.md`, `tasks.md`를 읽어라.\n\n규칙:\n- 지정된 미완료 작업 하나만 구현한다. 새 기능·새 의존성·리팩터링을 덧붙이지 않는다.\n- 작업 폴더(현재 디렉터리) 밖의 파일은 수정하지 않는다.\n- 구현 후 `node scripts/quality.mjs task`를 실행하고 출력 첫 줄(PASS/FAIL)과 실패 원인을 그대로 보고한다.\n- 화면을 바꿨으면 `npm.cmd run dev`로 띄운 실제 URL을 Playwright로 열어 해당 흐름을 확인한다(포트 사용 여부를 먼저 확인).\n- 워커 코드를 바꿨으면 워커를 재시작하고 실제 작업 1건으로 확인한 뒤 `docs/integration-status.md`에 기록한다.\n- `.kiro/runs/build-status.json`을 직접 쓰거나 고치지 않는다. 이 파일은 `scripts/quality.mjs`만 쓴다.\n- 테스트를 지우거나 기대값을 구현에 맞춰 바꾸거나, 실패를 샘플 결과로 숨기지 않는다.\n- 검사가 PASS일 때만 `tasks.md` 체크박스를 `[x]`로 바꾼다.\n- push·배포·PR은 하지 않는다.\n\n출력: 작업 번호, 바꾼 파일, 실행한 명령과 결과, 남은 문제와 최소 다음 조치.",
+    "tools":  [
+                  "read",
+                  "write",
+                  "shell",
+                  "@playwright"
+              ],
+    "permissions":  {
+                        "rules":  [
+                                      {
+                                          "capability":  "shell",
+                                          "match":  [
+                                                        "npm.cmd *",
+                                                        "npx.cmd *",
+                                                        "node scripts/*",
+                                                        "git diff*",
+                                                        "git log*",
+                                                        "git status*"
+                                                    ],
+                                          "effect":  "allow"
+                                      }
+                                  ]
+                    },
+    "resources":  [
+                      "file://AGENTS.md",
+                      "file://challenge.completed.md",
+                      "file://.kiro/steering/**/*.md"
+                  ],
+    "hooks":  [
+                  {
+                      "name":  "source-save-check",
+                      "trigger":  "PostToolUse",
+                      "matcher":  "write",
+                      "action":  {
+                                     "type":  "command",
+                                     "command":  "node scripts/quality.mjs save"
+                                 },
+                      "timeout":  45
+                  },
+                  {
+                      "name":  "turn-end-task-check",
+                      "trigger":  "Stop",
+                      "action":  {
+                                     "type":  "command",
+                                     "command":  "node scripts/quality.mjs task"
+                                 },
+                      "timeout":  120
+                  }
+              ],
+    "includeMcpJson":  true
 }

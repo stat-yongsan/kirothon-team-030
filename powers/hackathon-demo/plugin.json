@@ -1,8 +1,0 @@
-{
-  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "name": "hackathon-demo",
-  "version": "1.0.0",
-  "description": "해커톤 앱의 화면과 시연 흐름을 실제 실행으로 점검한다",
-  "author": {"name": "Hackathon participant"},
-  "keywords": ["hackathon-demo", "시연 점검", "demo check"]
-}
