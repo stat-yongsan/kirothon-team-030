@@ -2,14 +2,14 @@
 
 낮에 떠오른 생각·링크·사진을 저장만 하고 다시 정리하지 못하는 사람을 위한 앱입니다. 밤에 던져 두면 자는 동안 Kiro가 조사·정리하고, 아침에 HTML 보고서·영상·체험 URL·Google Calendar 일정으로 돌려주며 Notion에 날짜별로 기록합니다.
 
-**Demo:** [https://jamjarichae.vercel.app](http://localhost:3000/)(결과 보기 전용) · 시연 순서와 화면별 주소는 [docs/DEMO.md](docs/DEMO.md)
+**Demo:** **http://localhost:3000** (개발자 PC에서 실행할 때만 동작합니다. 공개 URL은 없습니다) · 시연 순서와 화면별 주소는 [docs/DEMO.md](docs/DEMO.md)
 
-**공개 시연판:** 2026-11-14 16:02–16:13에 개발자 PC에서 kiro-cli로 실제 실행한 6경로 결과(W1 개념 HTML·W2 영상 MP4·W3 아이디어 5개·W4 체험 페이지·W5 유튜브 요약·W6 일정)를 보는 **결과 보기 전용**입니다. 작업 큐·워커·kiro-cli가 로컬 PC에 있어 이 주소에서 담기·맡기기는 거부됩니다(503 `public_demo`). 전체 흐름은 6절대로 로컬에서 실행합니다.
+**데모는 로컬에서만 작동합니다.** 작업 큐·워커·kiro-cli·Notion·Google Calendar 연결이 모두 개발자 PC에 있어서, 전체 흐름(담기 → 맡기기 → 꺼내보기)은 6절대로 `npm.cmd run dev`와 `npm.cmd run worker`를 실행한 뒤 http://localhost:3000 에서 확인합니다. Vercel에 올린 결과 보기 전용 페이지(https://jamjarichae.vercel.app)는 2026-11-14 16시대 실행 결과의 스냅샷일 뿐 현재 화면·기능과 다르고 담기·맡기기는 거부되므로 데모로 쓰지 않습니다.
 
 ![메인 화면: 생각 잡기](docs/images/main.jpg)
 
 - 문제 원문과 확정/제안 구분: [challenge.completed.md](challenge.completed.md)
-- 활성 Spec: [.kiro/specs/jamjarichae/](.kiro/specs/jamjarichae/) (requirements → design → tasks, 작업 9개 모두 완료)
+- 활성 Spec: [.kiro/specs/jamjarichae/](.kiro/specs/jamjarichae/) (requirements → design → tasks, 작업 10개 완료)
 - Kiro 활용 기록: [BUILD_REPORT.md](BUILD_REPORT.md) · 요구→코드→테스트→실측 대응표: [docs/evidence.md](docs/evidence.md) · 실제 실행 기록: [docs/integration-status.md](docs/integration-status.md) · 외부 스킬 적용: [docs/skill-adapters.md](docs/skill-adapters.md)
 
 ---
@@ -46,7 +46,7 @@
 |---|---|---|
 | ① **생각 담기**: 메모·URL·이미지 + 목적 4개(개념알기·아이디어확대·요약·일정잡기) + 결과 형태. 허용되지 않은 조합은 화면과 서버가 같은 규칙으로 막습니다 | 떠오른 순간 버튼 한 번으로 저장하고 하던 일로 돌아갑니다 | `src/domain/jamjarichae/contracts.ts`, `src/components/jamjari/JamjariApp.tsx`, `src/app/api/jamjari/jobs/route.ts` |
 | ② **잠자리채에 맡기기**: 파일 기반 영속 큐 + 브라우저와 별개인 워커(lease·단계 체크포인트·재시도). 생성 엔진은 kiro-cli headless입니다 | 다시 조사·정리할 시간과 집중력이 없습니다. 브라우저를 닫아도 작업은 이어집니다 | `src/lib/jamjari/store.ts`, `worker.ts`, `kiro.ts`, `scripts/jamjari-worker.ts` |
-| ③ **아침에 꺼내보기**: 실제 상태 집계, 먼저 볼 결과 3개, HTML 열기·내려받기, 체험 URL, 질문 답변 후 재개, 연결 상태 | 아침에 무엇이 끝났고 무엇을 내가 해야 하는지 한눈에 봅니다 | `src/domain/jamjarichae/briefing.ts`, `render.ts`, `src/app/r/[id]/route.ts`, `src/app/p/[id]/` |
+| ③ **아침에 꺼내보기**: 첫 화면 카드 4개(① 목적이 뭐야? ② 밤 작업 보드 ③ 아침에 꺼내보기 ④ 전체 결과함). ①에 실제 상태 집계 브리핑과 "내 답변이 필요한 것", ②에 대기·진행 중 작업만, ③에 끝난 결과(HTML 열기·내려받기, 체험 URL, 일정 링크)와 "확인완료", ④에 확인완료한 결과를 쌓고 선택 삭제. 연결 상태는 Calendar·Notion을 실제 호출로 확인 | 아침에 무엇이 끝났고 무엇을 내가 해야 하는지 한눈에 봅니다 | `src/domain/jamjarichae/briefing.ts`, `render.ts`, `src/app/r/[id]/route.ts`, `src/app/p/[id]/` |
 
 ### 여섯 경로와 확인 상태 (2026-11-14 16:42 기준)
 
@@ -133,7 +133,7 @@ npm.cmd run build
 npm.cmd run start -- -p 3001 -H 0.0.0.0   # 워커는 그대로 npm.cmd run worker
 ```
 
-kiro-cli 없이 보려면 화면의 **샘플 모드**를 켜고 예시 버튼(예: "아이디어: 점심 메뉴 피로")으로 담은 뒤 맡깁니다. kiro-cli 호출과 외부 접속 없이 같은 파이프라인을 지나고, 결과에 "샘플"이 표시됩니다. 데이터는 `.data/jamjarichae/`(git 제외)에 저장됩니다. 선택 환경변수는 [.env.example](.env.example)에 있습니다.
+kiro-cli 없이 보려면 화면의 **샘플 모드**를 켜고 예시 버튼(개념잡기·아이디어 확장하기·일정잡기)으로 담은 뒤 맡깁니다. kiro-cli 호출과 외부 접속 없이 같은 파이프라인을 지나고, 결과에 "샘플"이 표시됩니다. 데이터는 `.data/jamjarichae/`(git 제외)에 저장됩니다. 선택 환경변수는 [.env.example](.env.example)에 있습니다.
 
 ## 7. 테스트
 
