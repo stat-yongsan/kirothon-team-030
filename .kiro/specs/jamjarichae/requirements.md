@@ -3,6 +3,7 @@
 > "날아가는 생각, 잠자리에서 잡아드립니다"
 > 작성 2026-11-14, kiro-cli. 원본: `challenge.completed.md`(문제 원문·확정/제안 구분), `JAMJARICHAE_KIRO_CONTEXT_20261114.md`.
 > 표기: **[확정]** 사용자 요구, **[제안]** 기본값, **[제약]** 실제 확인한 한계. 수용 기준 끝의 `(AC-xx)`는 컨텍스트 문서 12절 번호.
+> 최초 Quick Spec의 시점 기록이다. 이후 W2는 HyperFrames 로컬 영상 렌더, W6는 소유자 Calendar 등록, Notion은 소유자 토큰 기록을 구현·실측했다. 최신 상태와 한계는 `docs/integration-status.md` 6·8절을 따른다.
 
 ## 소개
 

@@ -1,6 +1,7 @@
 # Design (Quick Spec) — 잠자리채
 
 > 3시간 안에 제출할 MVP 기준. 요구사항 ID는 `requirements.md`의 R1–R5.
+> 최초 설계 기록이다. 이후 영상 로컬 렌더와 소유자 Calendar·Notion 연결을 추가했다. 최신 실행 결과는 `docs/integration-status.md` 6·8절에 있다.
 
 ## 구조
 
