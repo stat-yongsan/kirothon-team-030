@@ -1,6 +1,6 @@
 # 잠자리채 작업 인계 (새 세션은 이 파일부터 읽는다)
 
-갱신: 2026-11-14 13:52 KST(kiro-cli 세션 `sess_5b231bf0`, W5·W6 실제 실행 + release PASS). 이전: 13:36 세션 `sess_b4b2809d`. 제출 18:00(사용자 자료 기준, 현장 재확인).
+갱신: 2026-11-14 13:59 KST(kiro-cli 세션 `sess_5b231bf0`, W5·W6 실제 실행 + release PASS + 제출 레포 push). 이전: 13:36 세션 `sess_b4b2809d`. 제출 18:00(사용자 자료 기준, 현장 재확인).
 
 > 지금 실행 중: dev 서버(cmd pid 20656, http://localhost:3000), 워커 npm pid 20916 / node pid 33668(로그 `.data/worker6.out.log`, 13:44 youtube.ts 수정 반영). 진단 스크립트 `.data/diag-*.ts`, `.data/diag-submit.mjs`(담기+맡기기 API 호출, git 제외).
 
@@ -35,7 +35,7 @@
 
 연동 미구성(가짜로 채우지 않음): Anthropic 키, Google OAuth, Calendar MCP, Notion 토큰. Notebook 공개 API는 영상 생성 미지원(로드맵). 이미지 내용 분석 미연결.
 
-git: 어제 연습(job-choice) WIP는 타입 오류가 있어 `git stash@{0}`("practice job-choice WIP …")로 보관 + `.kiro/runs/backup-practice-job-choice-20261114.patch`. 복구는 `git stash pop`. 커밋·push 아직 안 함(사용자 지시 전 금지).
+git: 어제 연습(job-choice) WIP는 타입 오류가 있어 `git stash@{0}`("practice job-choice WIP …")로 보관 + `.kiro/runs/backup-practice-job-choice-20261114.patch`. 복구는 `git stash pop`. 13:57에 제출 레포 `team/main`으로 push함(4절). 이후 push도 사용자 지시가 있을 때만.
 
 ### 13:08 추가 확인
 
@@ -66,11 +66,15 @@ git: 어제 연습(job-choice) WIP는 타입 오류가 있어 `git stash@{0}`("p
   - W6 `j_b15b2e4a438dd7c6` 10초 awaiting_external_action, 행사/신청 마감 구분, URL 0개
   - `integration-status.md`(1·2·3.3·5절), `evidence.md`(R3.7–R3.10, 엔진 횟수, 4절), README 경로 표 갱신
   - `quality.mjs task` PASS(13:47), `release --force` **PASS(13:50:20)**
-- [ ] **제출 레포 정리 — 사용자 지시 받음(13:4x)**: 레포 `https://github.com/stat-yongsan/kirothon-team-030`, 팀명 **AX:IS**. remote 추가·AGENTS.md 갱신·커밋·push 허용, 단 **push 전에 올릴 내용을 보여 주고 확인받기**
-  - 템플릿 확인 완료(13:43, web_fetch): 파일 `.gitignore`, `README.md`(1 문제 정의~7 테스트 + `## 팀`: `- **팀 번호:**`, `- **팀명:**`, 이름/역할 표), `BUILD_REPORT.md`(Kiro 활용 표: 기획·설계·구현·검증·기타), `SUBMISSION_GUIDE.md`. 필수: README 섹션 전부·Demo 줄, BUILD_REPORT.md, `.kiro/` 커밋, 최상단 `PRESENTATION.pdf`, 18:00 전 마지막 push, Public
-  - 사용자 확인 필요: ① 기존 kirothon-2026 커밋 이력(Vercel 계정명 등 포함)을 공개 레포에 같이 올릴지 ② 루트의 `Neo-Brutalism … Tuckii.jpg`(외부 디자인 참고 이미지), `KIROTHON_DAYPATCH_20261114.html`, `KIRO Basic.pdf`, `컨셉 보드 … .pdf`를 올릴지 ③ Demo 줄 링크 ④ PRESENTATION.pdf ⑤ 팀원 이름·역할
-  - 사용자 요청(13:5x) "구글 로그인은 JMT(=JWT로 추정) 사용" → 새 기능이고 OAuth 클라이언트 ID·비밀값이 없어 **확인 질문 중, 착수 안 함**
-- [ ] 사용자 지시가 있을 때만 커밋·push
+- [x] **제출 레포 이전·push (13:57, 사용자 "푸시하고 진행하자" 지시)**: 레포 `https://github.com/stat-yongsan/kirothon-team-030`(Public), 팀명 **AX:IS**
+  - git 구성: remote `team` 추가. 기존 로컬 `main`은 `kirothon-2026-main`으로 이름 변경(연습 레포 이력 + 오늘 작업 커밋 `424044b`, push 안 함). 새 `main` = 템플릿 `7a216c7` 위에 같은 트리를 커밋 1개(`3c50f35`)로 올림 → `team/main` 추적. `origin`(kirothon-2026)은 그대로, push 안 함. stash@{0}은 그대로
+  - 올린 것: 코드·테스트·`.kiro/`(specs·steering·agents·skills·workflows·settings)·docs·README(템플릿 섹션 형식으로 재작성)·`BUILD_REPORT.md`(신규)·`SUBMISSION_GUIDE.md`(템플릿)·`.gitignore`(템플릿 항목 합침). 이전 README의 연습 환경 설명은 `docs/PRACTICE_TEMPLATE.md`로 옮김
+  - 안 올린 것(`.git/info/exclude`): `Neo-Brutalism … Tuckii.jpg`, `KIROTHON_DAYPATCH_20261114.html`, `컨셉 보드 … .pdf`. `KIRO Basic.pdf`는 원래 .gitignore. `.env.local`·`.data/`·`.kiro/runs/`는 gitignore
+  - push 전 검사: 비밀값·키·개인 이메일 패턴 0건, 300KB 넘는 파일 없음, `.env.example` 값 비어 있음. 공개 문서에 Vercel 계정 핸들(`docs/SETUP_STATUS.md`, `docs/MANUAL.html`, `docs/PRACTICE_TEMPLATE.md`)은 남아 있음(비밀값 아님, 사용자에게 알림)
+  - 로그아웃 상태(web_fetch)로 레포 첫 화면 README 표시 확인
+  - AGENTS.md: 제출 원격 `team`, 로컬 `main` → `team/main`만 push, 18:00 마감, 외부 자료는 exclude로 갱신
+- [ ] 제출 남은 것(사용자): README **Demo 줄 영상 링크**, 최상단 **`PRESENTATION.pdf`**, 팀원 이름·역할 표, README 근거·기대 효과의 정량 근거(_보강 예정_ 표시), 18:00 전 마지막 push
+- [ ] Google 로그인(JWT): 사용자 결정 "비밀값은 나중에, 로그인은 나중에 붙이자"(13:5x). OAuth 클라이언트 ID·비밀값 받으면 착수
 
 ## 5. 실행 방법
 

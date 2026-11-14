@@ -79,7 +79,7 @@
 
 ## 6. 설치와 실행
 
-Windows 11, Node 22, kiro-cli 3.3(로그인된 상태)에서 확인했습니다. W5 유튜브는 `yt-dlp`와 `ffmpeg`가 PATH에 있어야 합니다.
+Windows, Node 22, kiro-cli 3.3(로그인된 상태)에서 확인했습니다. W5 유튜브는 `yt-dlp`와 `ffmpeg`가 PATH에 있어야 합니다.
 
 ```powershell
 # 1. 의존성 설치
