@@ -34,7 +34,7 @@ export function eventIdFor(jobId: string): string {
   return `jjr${createHash("sha1").update(jobId).digest("hex").slice(0, 28)}`;
 }
 
-async function accessToken(cfg: CalendarConfig, f: FetchLike): Promise<string> {
+export async function accessToken(cfg: CalendarConfig, f: FetchLike): Promise<string> {
   let res: Response;
   try {
     res = await f("https://oauth2.googleapis.com/token", {

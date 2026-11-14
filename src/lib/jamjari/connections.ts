@@ -1,13 +1,14 @@
 // 외부 연결 상태. 값은 환경변수·워커 점검 결과로만 판정하고, 연결되지 않은 것을 연결됐다고 표시하지 않는다.
 import fs from "node:fs";
 import path from "node:path";
-import { readCalendarConfig } from "./calendar.ts";
+import { accessToken, readCalendarConfig } from "./calendar.ts";
+import { readNotionConfig } from "./notion.ts";
 import { readBeat } from "./store.ts";
 
 export type ConnState = "connected" | "not_configured" | "unsupported" | "unknown" | "down";
 
 export interface Connection {
-  id: "kiro" | "worker" | "google_login" | "calendar" | "notion" | "video";
+  id: "kiro" | "worker" | "calendar" | "notion" | "video";
   label: string;
   state: ConnState;
   detail: string;
@@ -23,7 +24,57 @@ export function notionConfigured(env: Record<string, string | undefined> = proce
   return Boolean(env.NOTION_TOKEN?.trim() && env.NOTION_ROOT_PAGE_ID?.trim());
 }
 
-export function listConnections(env: Record<string, string | undefined> = process.env, now = new Date()): Connection[] {
+export type Probes = Partial<Record<"calendar" | "notion", { ok: boolean; detail: string; checkedAt: string }>>;
+
+const PROBE_TTL_MS = 60_000;
+let probeCache: { at: number; value: Probes } | null = null;
+
+async function probeCalendar(env: Record<string, string | undefined>): Promise<Probes["calendar"]> {
+  const cfg = readCalendarConfig(env);
+  if (!cfg) return undefined;
+  const checkedAt = new Date().toISOString();
+  try {
+    const token = await accessToken(cfg, fetch);
+    const res = await fetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?maxResults=1", {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    return res.ok
+      ? { ok: true, detail: "권한 확인됨(calendar.events). 일정이 확정되면 전날·당일 알림과 함께 등록합니다. 생성된 일정 URL은 작업 결과에서 확인하세요.", checkedAt }
+      : { ok: false, detail: `캘린더 접근 실패(HTTP ${res.status}). node scripts/google-auth.mjs로 다시 동의하세요.`, checkedAt };
+  } catch (e) {
+    return { ok: false, detail: e instanceof Error ? `Google 인증 실패: ${e.message}` : "Google에 연결하지 못했습니다.", checkedAt };
+  }
+}
+
+async function probeNotion(env: Record<string, string | undefined>): Promise<Probes["notion"]> {
+  const cfg = readNotionConfig(env);
+  if (!cfg) return undefined;
+  const checkedAt = new Date().toISOString();
+  try {
+    const res = await fetch(`https://api.notion.com/v1/pages/${cfg.rootPageId}`, {
+      headers: { Authorization: `Bearer ${cfg.token}`, "Notion-Version": "2022-06-28" },
+      signal: AbortSignal.timeout(10_000),
+    });
+    return res.ok
+      ? { ok: true, detail: "토큰과 루트 페이지 접근 확인됨 — 루트 › 날짜 › 경로 › 작업 순으로 기록합니다.", checkedAt }
+      : { ok: false, detail: `루트 페이지 접근 실패(HTTP ${res.status}). 연동 앱에 페이지를 공유했는지 확인하세요.`, checkedAt };
+  } catch {
+    return { ok: false, detail: "Notion에 연결하지 못했습니다.", checkedAt };
+  }
+}
+
+/** 실제 호출로 Calendar·Notion 연결을 확인한다. 60초 동안 결과를 재사용한다(3초마다 화면이 부르므로) */
+export async function probeConnections(env: Record<string, string | undefined> = process.env): Promise<Probes> {
+  if (env.VERCEL) return {};
+  if (probeCache && Date.now() - probeCache.at < PROBE_TTL_MS) return probeCache.value;
+  const [calendar, notion] = await Promise.all([probeCalendar(env), probeNotion(env)]);
+  const value: Probes = { ...(calendar ? { calendar } : {}), ...(notion ? { notion } : {}) };
+  probeCache = { at: Date.now(), value };
+  return value;
+}
+
+export function listConnections(env: Record<string, string | undefined> = process.env, now = new Date(), probes: Probes = {}): Connection[] {
   const beat = readBeat();
   const alive = beat ? now.getTime() - new Date(beat.beatAt).getTime() < WORKER_STALE_MS : false;
   return [
@@ -42,26 +93,20 @@ export function listConnections(env: Record<string, string | undefined> = proces
       detail: beat?.kiro ? `${beat.kiro.detail} (워커가 ${beat.kiro.checkedAt.slice(11, 19)} UTC 확인)` : "워커가 아직 확인하지 않음",
     },
     {
-      id: "google_login",
-      label: "Google 로그인",
-      state: env.GOOGLE_CLIENT_ID?.trim() ? "unknown" : "not_configured",
-      detail: "OAuth 클라이언트 미구성 — 지금은 이 PC의 소유자 1명 모드로 동작합니다.",
-    },
-    {
       id: "calendar",
       label: "Google Calendar",
-      state: readCalendarConfig(env) ? "unknown" : "not_configured",
-      detail: readCalendarConfig(env)
-        ? "refresh token 설정됨 — 일정이 확정되면 전날·당일 알림과 함께 등록합니다. 실제 생성 여부는 작업 결과의 일정 URL로 확인하세요."
-        : "Google 동의(refresh token) 없음 — node scripts/google-auth.mjs 실행 전까지 일정은 코드 판정까지만 하고 등록하지 않습니다(일정 URL 없음).",
+      state: !readCalendarConfig(env) ? "not_configured" : probes.calendar ? (probes.calendar.ok ? "connected" : "down") : "unknown",
+      detail: !readCalendarConfig(env)
+        ? "Google 동의(refresh token) 없음 — node scripts/google-auth.mjs 실행 전까지 일정은 코드 판정까지만 하고 등록하지 않습니다(일정 URL 없음)."
+        : probes.calendar?.detail ?? "권한을 확인하는 중…",
     },
     {
       id: "notion",
       label: "Notion 날짜별 기록",
-      state: notionConfigured(env) ? "unknown" : "not_configured",
-      detail: notionConfigured(env)
-        ? "토큰 설정됨 — 루트 › 날짜 › 경로 › 작업 순으로 기록합니다. 작업별 성공 여부는 결과의 Notion 상태에서 확인하세요."
-        : "NOTION_TOKEN·NOTION_ROOT_PAGE_ID 없음 — 결과는 앱에 먼저 보관합니다.",
+      state: !notionConfigured(env) ? "not_configured" : probes.notion ? (probes.notion.ok ? "connected" : "down") : "unknown",
+      detail: !notionConfigured(env)
+        ? "NOTION_TOKEN·NOTION_ROOT_PAGE_ID 없음 — 결과는 앱에 먼저 보관합니다."
+        : probes.notion?.detail ?? "토큰과 루트 페이지를 확인하는 중…",
     },
     {
       id: "video",

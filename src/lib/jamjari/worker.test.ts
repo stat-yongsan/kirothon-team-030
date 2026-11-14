@@ -393,6 +393,7 @@ describe("재시도·샘플 (R2.5, R5.5)", () => {
 
 describe("Notion 날짜별 기록 (AC-16)", () => {
   function fakeNotion(failOn?: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 테스트용 가짜 서버가 받은 JSON 본문
     const calls: { method: string; path: string; body: any }[] = [];
     const f = async (url: string, init?: RequestInit) => {
       const path = url.replace("https://api.notion.com/v1", "");
@@ -442,6 +443,7 @@ describe("Google Calendar 생성 (R3.9)", () => {
   const TEXT = "AI 실무 세미나 2026년 11월 20일 15:00";
 
   function fakeGoogle(opts: { tokenStatus?: number; eventStatus?: number } = {}) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- 테스트용 가짜 서버가 받은 JSON 본문
     const calls: { url: string; method: string; body: any }[] = [];
     const f = async (url: string, init?: RequestInit) => {
       const method = init?.method ?? "GET";

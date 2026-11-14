@@ -237,3 +237,18 @@ export function writeBeat(beat: WorkerBeat): void {
 export function readBeat(): WorkerBeat | null {
   return readJsonFile<WorkerBeat>(path.join(dataDir(), "worker.json"));
 }
+
+/**
+ * 작업 하나와 그 결과물(HTML·영상), 업로드 이미지, 실행 폴더를 지운다. 되돌릴 수 없다.
+ * Notion·Google Calendar에 이미 만든 외부 자원은 지우지 않는다.
+ */
+export function deleteJobData(job: Job): void {
+  const ids = [job.result?.artifactId, job.result?.videoId].filter((x): x is string => Boolean(x && ID_RE.test(x)));
+  withLock(job.id, () => {
+    for (const id of ids) for (const ext of ["html", "jpg", "mp4"]) fs.rmSync(path.join(sub("artifacts"), `${id}.${ext}`), { force: true });
+    const up = job.input.image?.storageKey;
+    if (up && /^[a-z]_[0-9a-f]{16}\.(png|jpg|webp)$/.test(up)) fs.rmSync(path.join(sub("uploads"), up), { force: true });
+    fs.rmSync(path.join(sub("sandbox"), job.id), { recursive: true, force: true });
+    fs.rmSync(jobFile(job.id), { force: true });
+  });
+}

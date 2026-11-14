@@ -2,8 +2,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { capture, entrust, answer, cancel, ServiceError } from "./service";
-import { claimNext, getJob, listJobs, updateJob } from "./store";
+import { acknowledge, capture, deleteResults, entrust, answer, cancel, ServiceError } from "./service";
+import { claimNext, getJob, listJobs, readArtifact, saveArtifact, updateJob } from "./store";
 
 let dir: string;
 beforeEach(() => {
@@ -111,5 +111,29 @@ describe("답변·취소 (R2.7, R4.4)", () => {
   it("없는 ID·경로 조작 ID는 404", () => {
     expect(() => cancel("../../etc", NOW)).toThrow(/찾을 수 없습니다/);
     expect(getJob("j_0000000000000000")).toBeNull();
+  });
+});
+
+describe("전체 결과함 삭제", () => {
+  function finished(text: string) {
+    const { job } = capture({ purpose: "idea", output: "html", text, intent: "save" }, NOW);
+    saveArtifact("a_0123456789abcdef", "<p>결과</p>", "html");
+    updateJob(job.id, (j) => {
+      j.status = "completed";
+      j.result = { jobId: j.id, workflow: j.workflow, status: "completed", title: "t", highlights: [], artifactId: "a_0123456789abcdef", notionSyncStatus: "not_configured", assumptions: [], coverageNotes: [], sources: [], errors: [], engine: "code" };
+    });
+    return job.id;
+  }
+
+  it("확인완료한 작업만 삭제되고 결과 파일도 함께 지워진다. 확인 전 작업·없는 ID는 건너뛴다", () => {
+    const acked = finished("확인한 결과");
+    acknowledge(acked, NOW);
+    const notAcked = capture({ purpose: "idea", output: "html", text: "확인 전", intent: "save" }, NOW).job.id;
+    const out = deleteResults([acked, notAcked, "j_ffffffffffffffff"]);
+    expect(out.deleted).toEqual([acked]);
+    expect(out.skipped).toEqual([notAcked, "j_ffffffffffffffff"]);
+    expect(getJob(acked)).toBeNull();
+    expect(readArtifact("a_0123456789abcdef", "html")).toBeNull();
+    expect(getJob(notAcked)).not.toBeNull();
   });
 });

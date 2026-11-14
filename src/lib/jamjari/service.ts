@@ -1,7 +1,7 @@
 // API가 쓰는 작업 조작: 담기 · 맡기기 · 답변 · 취소. 서버에서 조합을 다시 검증한다(R1.3).
 import { captureDate, DEFAULT_TZ, validateCapture, type CaptureInput } from "../../domain/jamjarichae/contracts.ts";
 import type { Job, StoredImage } from "../../domain/jamjarichae/job.ts";
-import { createJob, getJob, isTerminal, listJobs, newId, pushHistory, updateJob } from "./store.ts";
+import { createJob, deleteJobData, getJob, isTerminal, listJobs, newId, pushHistory, updateJob } from "./store.ts";
 
 export const OWNER = "owner";
 
@@ -123,4 +123,20 @@ export function acknowledge(id: string, now = new Date()): Job {
     j.acknowledgedAt = now.toISOString();
     pushHistory(j, "확인완료 → 전체 결과함", now);
   }) as Job;
+}
+
+/** 전체 결과함(확인완료한 작업)에서 선택한 것만 삭제한다. 확인완료 전 작업·남의 작업·없는 ID는 건너뛴다 */
+export function deleteResults(ids: string[]): { deleted: string[]; skipped: string[] } {
+  const deleted: string[] = [];
+  const skipped: string[] = [];
+  for (const id of new Set(ids)) {
+    const job = getJob(id);
+    if (!job || job.userId !== OWNER || !job.acknowledgedAt || !isTerminal(job.status)) {
+      skipped.push(id);
+      continue;
+    }
+    deleteJobData(job);
+    deleted.push(id);
+  }
+  return { deleted, skipped };
 }

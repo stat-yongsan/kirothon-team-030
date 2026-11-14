@@ -161,3 +161,11 @@ W5 유튜브 결과는 설계대로 `partial`이다. 요약 근거는 자막뿐�
 - 동작: `http.ts` guard가 Vercel에서 쓰기만 503 `public_demo`로 거부하고 읽기는 허용. `demo-data/jamjarichae`에 6절 결과 7건(사진 실패 건 제외)과 결과물 8개(HTML 7·MP4 1, 4.2MB)를 넣었다. W6 일정 링크(계정 이메일 포함)·Notion 링크는 스냅샷에서 지웠다. 메인 화면 상단에 "공개 시연판 · 결과 보기 전용" 안내, 연결 상태의 영상 렌더는 Vercel에서 `unsupported`.
 - 업로드 제외: `.vercelignore` 허용 목록(`src`, `demo-data`, 설정 파일만). 첫 시도는 루트 설치 파일(.exe)까지 599.5MB가 올라가 "File size limit exceeded"로 배포 실패(배포 생성 전 중단), 두 번째는 프레임워크 미지정으로 실패 → `vercel.json` `framework: nextjs`로 해결.
 - 확인(로그인 없이, 16:38–16:42): 메인·`/api/jamjari/jobs`(작업 7개)·결과 HTML 6개·W4 체험·`/v/…` MP4 모두 200. 브라우저에서 담기 → "공개 시연판은 결과 보기 전용" 오류 표시, 영상 재생(61초·1920px), W4 버튼 클릭 시 6/19 득표 1/5→2/5.
+
+## 8. 화면 개편과 연결 상태 실확인 (17:00–17:25)
+
+- 화면: 첫 페이지는 1 목적이 뭐야? / 2 밤 작업 보드 / 3 아침에 꺼내보기 / 4 전체 결과함 카드 4개. 브리핑 문장과 "내 답변이 필요한 것"은 1번에 둔다. 밤 작업 보드는 저장·대기·예약·진행 중만, 아침에 꺼내보기는 결과가 나온 작업만 보여 주고 "확인완료"(`POST /api/jamjari/jobs/{id}/ack`)를 누르면 전체 결과함에 쌓인다. 전체 결과함은 선택 삭제(`POST /api/jamjari/results/delete`, 확인완료한 작업만, 결과 파일·업로드·실행 폴더 삭제, Notion·Calendar에 이미 만든 외부 자원은 삭제하지 않음).
+- 정리: 지난 테스트에서 쌓인 작업 44건은 삭제하지 않고 `hidden`으로 화면에서만 숨겼다(파일 유지).
+- 연결 상태: 설정 유무만 보던 표시를 실제 호출로 바꿨다(60초 캐시). Calendar는 refresh token으로 access token을 갱신하고 기본 캘린더 이벤트를 조회, Notion은 루트 페이지를 조회한다. 17:13 워커·kiro-cli·Calendar·Notion·HyperFrames 5개 모두 `connected`. 별도로 확인: Notion 연동 앱 `jamjarichae` 토큰 유효·루트 페이지 접근 가능, Calendar 토큰 갱신(`calendar.events`)·조회 성공, 실제 일정 작업 3건 completed(일정 생성·Notion 기록).
+- Google 로그인(JWT)·사용자별 Notion/Calendar 연결은 구현하지 않았다. 시작했다가 사용자 지시로 중단하고 코드를 되돌렸으며 연결 상태 목록에서 "Google 로그인" 항목은 뺐다. 지금은 이 PC의 소유자 1명 모드다. 환경변수 기반 Notion·Calendar는 소유자 1명용이다.
+- 검사: lint 오류 0(테스트의 `any` 2건은 사유 주석 후 허용, 미사용 prop 제거), 타입 검사·테스트 138개 통과. 브라우저(Edge)로 새 화면 흐름은 확인하지 못했다.

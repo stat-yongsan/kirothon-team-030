@@ -208,6 +208,17 @@ export function JamjariApp() {
     await refresh();
   }
 
+  async function deleteSelected(ids: string[]) {
+    const res = await api("/api/jamjari/results/delete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    const body = await res.json().catch(() => null);
+    setNotice(res.ok ? `${body.deleted.length}개를 삭제했습니다.${body.skipped.length ? ` (${body.skipped.length}개는 건너뜀)` : ""}` : body?.error?.message ?? "삭제하지 못했습니다.");
+    await refresh();
+  }
+
   const jobs = data?.jobs ?? [];
   const drafts = jobs.filter((j) => j.status === "draft");
   // 밤 작업 보드: 저장(대기)·큐·진행 중인 것만. 끝난 것은 아침에 꺼내보기로 간다
@@ -448,7 +459,7 @@ export function JamjariApp() {
       )}
 
       {/* 3. 아침에 꺼내보기 · 전체 결과함 */}
-      {(page === "morning" || page === "all") && <Morning data={data} view={page} onAck={(id) => act(id, "ack")} />}
+      {(page === "morning" || page === "all") && <Morning data={data} view={page} onAck={(id) => act(id, "ack")} onDelete={deleteSelected} />}
 
       {page !== "home" && (
       <>
@@ -522,7 +533,8 @@ function BoardCard({ job, onCancel }: { job: JobView; onCancel: () => void }) {
 
 const FINISHED: JobStatus[] = ["completed", "partial", "failed", "awaiting_external_action", "awaiting_external_confirmation"];
 
-function Morning({ data, view, onAck }: { data: ApiState | null; view: "morning" | "all"; onAck: (id: string) => void }) {
+function Morning({ data, view, onAck, onDelete }: { data: ApiState | null; view: "morning" | "all"; onAck: (id: string) => void; onDelete: (ids: string[]) => Promise<void> }) {
+  const [picked, setPicked] = useState<string[]>([]);
   const finished = (data?.jobs ?? []).filter((j) => j.result && FINISHED.includes(j.status));
   const results = finished.filter((j) => !j.acknowledgedAt);
   const archive = finished.filter((j) => j.acknowledgedAt).sort((a, b) => (b.acknowledgedAt ?? "").localeCompare(a.acknowledgedAt ?? ""));
@@ -543,11 +555,51 @@ function Morning({ data, view, onAck }: { data: ApiState | null; view: "morning"
       </>
       )}
 
+      {view === "all" && archive.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded-xl border-[3px] border-black bg-white px-3 py-2" data-testid="delete-bar">
+          <label className="flex items-center gap-2 text-sm font-bold">
+            <input
+              type="checkbox"
+              data-testid="pick-all"
+              className="h-5 w-5 accent-black"
+              checked={picked.length > 0 && archive.every((j) => picked.includes(j.id))}
+              onChange={(e) => setPicked(e.target.checked ? archive.map((j) => j.id) : [])}
+            />
+            전체 선택
+          </label>
+          <button
+            type="button"
+            data-testid="delete-selected"
+            disabled={picked.length === 0}
+            onClick={async () => {
+              if (!window.confirm(`선택한 ${picked.length}개를 삭제할까요? 결과 파일이 지워지고 되돌릴 수 없습니다. (Notion·Google Calendar에 이미 만든 기록은 지워지지 않습니다.)`)) return;
+              await onDelete(picked);
+              setPicked([]);
+            }}
+            className={`${btn} bg-[#ff8a5b] py-1 text-sm`}
+          >
+            🗑 선택 삭제 ({picked.length})
+          </button>
+        </div>
+      )}
+
       {view === "all" && (
       <div className="mt-3 grid gap-3" data-testid="results">
         {archive.length === 0 && <p className="text-sm text-neutral-600">확인완료한 결과가 아직 없습니다. 아침에 꺼내보기에서 &ldquo;확인완료&rdquo;를 누르면 여기에 쌓입니다.</p>}
         {archive.map((j) => (
-          <ResultCard key={j.id} job={j} />
+          <div key={j.id}>
+            <label className="mb-1 flex items-center gap-2 text-sm font-bold">
+              <input
+                type="checkbox"
+                data-testid="pick"
+                className="h-5 w-5 accent-black"
+                checked={picked.includes(j.id)}
+                onChange={(e) => setPicked((p) => (e.target.checked ? [...p, j.id] : p.filter((x) => x !== j.id)))}
+              />
+              삭제할 결과로 선택
+            </label>
+            <ResultCard job={j} />
+          </div>
         ))}
       </div>
       )}
@@ -573,7 +625,7 @@ function AnswerBox({ job, label, onSubmit, placeholder }: { job: JobView; label:
   );
 }
 
-function ResultCard({ job, compact, onAnswer, onAck }: { job: JobView; compact?: boolean; onAnswer?: (id: string, v: string) => void; onAck?: () => void }) {
+function ResultCard({ job, compact, onAck }: { job: JobView; compact?: boolean; onAck?: () => void }) {
   const r = job.result!;
   const spec = workflowSpec(job.workflow);
   const isProto = r.artifactType === "web_prototype";

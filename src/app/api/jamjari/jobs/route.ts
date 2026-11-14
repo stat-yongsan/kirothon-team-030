@@ -2,7 +2,7 @@ import { connection } from "next/server";
 import { buildBriefing } from "@/domain/jamjarichae/briefing";
 import { CaptureRequestSchema, LIMITS } from "@/domain/jamjarichae/contracts";
 import { toView, type StoredImage } from "@/domain/jamjarichae/job";
-import { listConnections } from "@/lib/jamjari/connections";
+import { listConnections, probeConnections } from "@/lib/jamjari/connections";
 import { fail, guard, sniffImage, toResponse } from "@/lib/jamjari/http";
 import { capture, OWNER } from "@/lib/jamjari/service";
 import { listJobs, newId, saveUpload } from "@/lib/jamjari/store";
@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       .filter((j) => j.userId === OWNER && !j.hidden)
       .map(toView);
     return Response.json(
-      { jobs, briefing: buildBriefing(jobs.filter((j) => !j.acknowledgedAt)), connections: listConnections(), now: new Date().toISOString() },
+      { jobs, briefing: buildBriefing(jobs.filter((j) => !j.acknowledgedAt)), connections: listConnections(process.env, new Date(), await probeConnections()), now: new Date().toISOString() },
       { headers: { "cache-control": "no-store" } },
     );
   } catch (error) {
