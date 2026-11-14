@@ -33,7 +33,7 @@ export interface WorkflowSpec {
   required?: InputKind[];
   /** URL 정확히 1개만 허용(W5) */
   urlOnly?: boolean;
-  artifactType: "html_report" | "notebook_video" | "web_prototype" | "calendar_event";
+  artifactType: "html_report" | "video_file" | "web_prototype" | "calendar_event";
   notionSection: string;
 }
 
@@ -60,9 +60,9 @@ export const WORKFLOWS: readonly WorkflowSpec[] = [
     id: "concept_video",
     purpose: "concept",
     output: "video",
-    outputLabel: "Notebook 영상 링크",
+    outputLabel: "영상(MP4)",
     allowed: ["text", "url", "image"],
-    artifactType: "notebook_video",
+    artifactType: "video_file",
     notionSection: "02 개념알기·영상",
   },
   {
@@ -251,7 +251,7 @@ export const JOB_STATUS_LABEL: Record<JobStatus, string> = {
   cancelled: "취소됨",
 };
 
-export const STEPS = ["ingest", "research", "generate", "verify", "store_artifact", "sync_notion", "external_action"] as const;
+export const STEPS = ["ingest", "research", "generate", "verify", "store_artifact", "render_video", "sync_notion", "external_action"] as const;
 export type Step = (typeof STEPS)[number];
 
 export const STEP_LABEL: Record<Step, string> = {
@@ -260,6 +260,7 @@ export const STEP_LABEL: Record<Step, string> = {
   generate: "만드는 중",
   verify: "확인 중",
   store_artifact: "결과 저장",
+  render_video: "영상 만드는 중",
   sync_notion: "Notion 기록",
   external_action: "외부 연결",
 };

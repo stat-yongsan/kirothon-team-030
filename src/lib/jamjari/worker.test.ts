@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SAMPLE_CONCEPT, SAMPLE_IDEAS, SAMPLE_PROTOTYPE, SAMPLE_SCHEDULE, SAMPLE_SUMMARY } from "../../domain/jamjarichae/fixtures";
 import type { KiroRunner, KiroRunOptions } from "./kiro";
 import { answer, capture, type CaptureRequest } from "./service";
-import { claimNext, getJob, readArtifact, updateJob } from "./store";
+import { claimNext, getJob, readArtifact, sandboxFor, updateJob } from "./store";
 import { processJob, type WorkerDeps } from "./worker";
 
 let dir: string;
@@ -43,6 +43,11 @@ function deps(kiro: KiroRunner): WorkerDeps {
       },
       fetchTranscript: async () => null,
       captureFrames: async () => [],
+    },
+    video: async (dir) => {
+      const file = path.join(dir, "out.mp4");
+      fs.writeFileSync(file, Buffer.alloc(2048, 1));
+      return { ok: true, file };
     },
     now: () => NOW,
     env: {},
@@ -131,18 +136,33 @@ describe("W1 개념 (R3.1–R3.3)", () => {
   });
 });
 
-describe("W2 영상 (R3.4, AC-06)", () => {
-  it("자료까지 만들고 외부 조치 대기, 영상 URL 없음", async () => {
+describe("W2 영상 (HyperFrames 로컬 렌더)", () => {
+  it("조사 결과로 MP4를 만들어 /v/ 주소를 붙이고 HTML 자료도 남김", async () => {
     const id = queued({ purpose: "concept", output: "video", text: "RAG" });
-    expect(await processJob(id, deps(fakeKiro([SAMPLE_CONCEPT])))).toBe("awaiting_external_action");
+    expect(await processJob(id, deps(fakeKiro([SAMPLE_CONCEPT])))).toBe("completed");
     const r = getJob(id)!.result!;
-    expect(r.status).toBe("partial");
-    expect(r.userLinkUrl).toBeUndefined();
+    expect(r.artifactType).toBe("video_file");
+    expect(r.videoUrl).toMatch(/^\/v\/a_/);
+    expect(r.videoDownloadUrl).toBe(`${r.videoUrl}?download=1`);
     expect(r.artifactUrl).toMatch(/^\/r\//);
-    expect(r.errors[0].code).toBe("notebook_video_unsupported");
+    expect(r.videoSeconds).toBeGreaterThan(10);
+    expect(r.errors).toEqual([]);
+    expect(readArtifact(r.videoId!, "mp4")?.length).toBe(2048);
+    const html = fs.readFileSync(path.join(sandboxFor(id), "video", "index.html"), "utf8");
+    expect(html).toContain('data-composition-id="jamjarichae"');
+    expect(html).toContain("kiro-cli 조사");
+  });
+
+  it("렌더가 실패하면 영상 URL 없이 부분 완료로 보고서만 남김", async () => {
+    const id = queued({ purpose: "concept", output: "video", text: "RAG" });
+    const d = { ...deps(fakeKiro([SAMPLE_CONCEPT])), video: async () => ({ ok: false, code: "timeout" as const, message: "시간 초과" }) };
+    expect(await processJob(id, d)).toBe("partial");
+    const r = getJob(id)!.result!;
+    expect(r.videoUrl).toBeUndefined();
+    expect(r.artifactUrl).toMatch(/^\/r\//);
+    expect(r.errors[0]).toMatchObject({ stage: "render_video", code: "timeout" });
   });
 });
-
 describe("W4 체험 (R3.6)", () => {
   it("안전 검사 통과 페이지는 /p/ 주소", async () => {
     const id = queued({ purpose: "idea", output: "prototype", text: "점심 고르기" });

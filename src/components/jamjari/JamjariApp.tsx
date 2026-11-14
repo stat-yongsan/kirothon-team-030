@@ -529,10 +529,23 @@ function ResultCard({ job, compact, onAnswer }: { job: JobView; compact?: boolea
           <strong>다음 행동</strong> {r.nextAction}
         </p>
       )}
+      {r.videoUrl && !compact && (
+        <div className="mt-2">
+          <video src={r.videoUrl} controls preload="metadata" data-testid="result-video" className="w-full rounded-lg border-2 border-black bg-black" aria-label={`${r.title} 영상`} />
+          <p className="mt-1 text-xs text-neutral-700">
+            {job.sample ? "샘플 자료로 만든 영상" : "kiro-cli 조사 결과로 만든 영상"} · 약 {Math.round(r.videoSeconds ?? 0)}초 · 소리 없음
+          </p>
+        </div>
+      )}
       <div className="mt-2 flex flex-wrap gap-2">
         {r.artifactUrl && (
           <a href={r.artifactUrl} target="_blank" rel="noopener" data-testid="open-artifact" className="rounded-lg border-2 border-black bg-[#ffd23f] px-2 py-1 text-sm font-bold">
-            {isProto ? "체험 페이지 열기" : spec.output === "video" ? "영상 자료(HTML) 열기" : spec.output === "calendar" ? "일정 판정 보기" : "HTML 열기"}
+            {isProto ? "체험 페이지 열기" : spec.output === "video" ? "조사 자료(HTML) 열기" : spec.output === "calendar" ? "일정 판정 보기" : "HTML 열기"}
+          </a>
+        )}
+        {r.videoDownloadUrl && (
+          <a href={r.videoDownloadUrl} data-testid="download-video" className="rounded-lg border-2 border-black bg-[#7bd88f] px-2 py-1 text-sm font-bold">
+            영상 내려받기(MP4)
           </a>
         )}
         {r.downloadUrl && !compact && (
@@ -552,11 +565,6 @@ function ResultCard({ job, compact, onAnswer }: { job: JobView; compact?: boolea
             )}
           </>
         )}
-        {r.userLinkUrl && (
-          <a href={r.userLinkUrl} target="_blank" rel="noopener noreferrer" className="rounded-lg border-2 border-black bg-[#a78bfa] px-2 py-1 text-sm font-bold">
-            영상 링크(사용자 입력)
-          </a>
-        )}
       </div>
       {!compact && (
         <details className="mt-2 text-sm">
@@ -573,9 +581,6 @@ function ResultCard({ job, compact, onAnswer }: { job: JobView; compact?: boolea
             ))}
           </ul>
         </details>
-      )}
-      {!compact && onAnswer && job.status === "awaiting_external_action" && job.workflow === "concept_video" && (
-        <AnswerBox job={job} label="영상 링크" placeholder="https://" onSubmit={(v) => onAnswer(job.id, v)} />
       )}
     </article>
   );

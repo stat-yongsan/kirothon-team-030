@@ -39,14 +39,17 @@ export interface Result {
   title: string;
   highlights: string[];
   nextAction?: string;
-  artifactType?: "html_report" | "notebook_video" | "web_prototype" | "calendar_event";
+  artifactType?: "html_report" | "video_file" | "web_prototype" | "calendar_event";
   artifactId?: string;
   /** 앱 안에서 여는 주소(/r/{id}, /p/{id}). 실제 저장 성공 뒤에만 채운다 */
   artifactUrl?: string;
   downloadUrl?: string;
+  /** W2: 앱이 로컬에서 렌더한 MP4. 저장 성공 뒤에만 채운다 */
+  videoId?: string;
+  videoUrl?: string;
+  videoDownloadUrl?: string;
+  videoSeconds?: number;
   providerResourceId?: string;
-  /** 사용자가 외부 조치 후 직접 붙여 넣은 링크(W2 영상). 앱이 생성·재생 확인하지 않음 */
-  userLinkUrl?: string;
   notionPageUrl?: string;
   notionSyncStatus: "pending" | "synced" | "failed" | "not_configured";
   assumptions: string[];

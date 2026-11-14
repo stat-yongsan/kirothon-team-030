@@ -1,5 +1,6 @@
 // 야간 워커의 작업 실행. 단계마다 체크포인트를 저장해 재시작하면 끝난 단계를 다시 실행하지 않는다(AC-03).
 import fs from "node:fs";
+import path from "node:path";
 import { MAX_ATTEMPTS, workflowSpec, type JobStatus, type ResultStatus, type Step } from "../../domain/jamjarichae/contracts.ts";
 import * as F from "../../domain/jamjarichae/fixtures.ts";
 import { answersText, type Job, type Result, type Source } from "../../domain/jamjarichae/job.ts";
@@ -16,6 +17,7 @@ import {
   type Prototype,
   type Summary,
 } from "../../domain/jamjarichae/outputs.ts";
+import { buildComposition, planVideo } from "../../domain/jamjarichae/video.ts";
 import { conceptBody, ideaBody, scheduleBody, shell, summaryBody } from "../../domain/jamjarichae/render.ts";
 import { decideSchedule, ScheduleExtractionSchema, verifyYearStated, type ScheduleDecision, type ScheduleExtraction } from "../../domain/jamjarichae/schedule.ts";
 import { captureDate } from "../../domain/jamjarichae/contracts.ts";
@@ -25,6 +27,7 @@ import { WEB_TOOLS, type KiroRunner } from "./kiro.ts";
 import * as P from "./prompts.ts";
 import { getJob, newId, pushHistory, sandboxFor, saveArtifact, updateJob } from "./store.ts";
 import * as YT from "./youtube.ts";
+import { renderWithHyperframes, type VideoRenderer } from "./video-render.ts";
 import type { z } from "zod";
 
 export interface WorkerDeps {
@@ -32,6 +35,7 @@ export interface WorkerDeps {
   fetchPage: (url: string) => Promise<FetchedPage>;
   probe: (url: string) => Promise<{ reachable: boolean; status: number | null }>;
   youtube: Pick<typeof YT, "fetchMeta" | "fetchTranscript" | "captureFrames">;
+  video: VideoRenderer;
   now: () => Date;
   env: Record<string, string | undefined>;
   kiroTimeoutMs: number;
@@ -44,6 +48,7 @@ export function defaultDeps(kiro: KiroRunner): WorkerDeps {
     fetchPage: (u) => fetchPublicPage(u),
     probe: (u) => probeUrl(u),
     youtube: YT,
+    video: renderWithHyperframes(),
     now: () => new Date(),
     env: process.env,
     kiroTimeoutMs: Number(process.env.JAMJARI_KIRO_TIMEOUT_MS) || 6 * 60_000,
@@ -292,20 +297,44 @@ async function runConcept(job: Job, deps: WorkerDeps): Promise<Outcome> {
     return { status: result.status === "partial" ? "partial" : "completed", result };
   }
 
-  // W2: 연구 결과까지 만들고 영상 생성은 외부 조치로 넘긴다(AC-06). 노트북 주소를 영상 주소라고 표시하지 않는다.
-  result.title = `${r.term} — 영상 자료`;
-  result.status = "partial";
-  result.coverageNotes.push(
-    "Gemini Notebook 공개 API에는 결과물(영상) 생성이 아직 없습니다(공식 로드맵, 2026-11-14 확인). 영상은 만들지 않았습니다.",
-    "Notion 페이지를 Notebook 소스로 넣는 단계는 Notion·Notebook 연결이 없어 실행하지 않았습니다.",
-  );
-  const { artifactId } = await step(job.id, "store_artifact", deps, async () => storeReport(job, result, "awaiting_external_action", conceptBody(r), deps));
+  const { artifactId } = await step(job.id, "store_artifact", deps, async () => storeReport(job, result, result.status, conceptBody(r), deps));
   attachReport(result, artifactId);
+
+  if (job.workflow === "concept_video") await attachVideo(job, r, result, deps);
+
   await syncNotion(job, result, deps);
-  await step(job.id, "external_action", deps, async () => ({ provider: "gemini_notebook", state: "awaiting_user" }));
-  result.nextAction = "이 자료 HTML을 Notebook 소스로 넣고 Video Overview를 만든 뒤, 영상 링크를 여기에 붙여 넣으세요.";
-  result.errors.push({ stage: "external_action", code: "notebook_video_unsupported", message: "영상 자동 생성 경로가 없습니다.", retryable: false });
-  return { status: "awaiting_external_action", result, question: "Notebook에서 만든 영상 링크를 붙여 넣으면 결과에 연결합니다." };
+  return { status: result.status === "partial" ? "partial" : "completed", result };
+}
+
+/** W2: 조사 결과로 장면을 짜고 로컬에서 MP4를 렌더한다(HyperFrames). 실패해도 보고서는 남기고 부분 완료로 표시한다 */
+async function attachVideo(job: Job, r: ConceptResearch, result: Result, deps: WorkerDeps): Promise<void> {
+  const plan = planVideo(r, { sample: job.sample });
+  const out = await step(job.id, "render_video", deps, async () => {
+    const dir = path.join(sandboxFor(job.id), "video");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "index.html"), buildComposition(plan), "utf8");
+    const done = await deps.video(dir);
+    if (!done.ok || !done.file) return { ok: false as const, code: done.code ?? "render_error", message: done.message ?? "영상 렌더에 실패했습니다." };
+    const videoId = newId("a");
+    saveArtifact(videoId, fs.readFileSync(done.file), "mp4");
+    return { ok: true as const, videoId };
+  });
+  if (!out.ok) {
+    result.status = "partial";
+    result.nextAction = "영상은 만들지 못했습니다. 아래 보고서를 먼저 확인하고, 같은 생각을 다시 맡겨 주세요.";
+    result.errors.push({ stage: "render_video", code: out.code, message: out.message, retryable: true });
+    result.coverageNotes.push(`영상 렌더 실패(${out.code}): ${out.message}`);
+    return;
+  }
+  result.artifactType = "video_file";
+  result.videoId = out.videoId;
+  result.videoUrl = `/v/${out.videoId}`;
+  result.videoDownloadUrl = `/v/${out.videoId}?download=1`;
+  result.videoSeconds = plan.totalSec;
+  result.title = `${r.term} — 영상`;
+  result.coverageNotes.push(
+    `영상: 장면 ${plan.scenes.length}개 · 약 ${Math.round(plan.totalSec)}초 · 내레이션·음악 없는 자막형 영상(HyperFrames 로컬 렌더).${job.sample ? " 샘플 자료로 만들었습니다." : ""}`,
+  );
 }
 
 // ---- W3 아이디어 5개 ----

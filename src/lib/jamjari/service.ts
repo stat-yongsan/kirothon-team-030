@@ -1,5 +1,5 @@
 // API가 쓰는 작업 조작: 담기 · 맡기기 · 답변 · 취소. 서버에서 조합을 다시 검증한다(R1.3).
-import { captureDate, DEFAULT_TZ, isHttpUrl, validateCapture, type CaptureInput } from "../../domain/jamjarichae/contracts.ts";
+import { captureDate, DEFAULT_TZ, validateCapture, type CaptureInput } from "../../domain/jamjarichae/contracts.ts";
 import type { Job, StoredImage } from "../../domain/jamjarichae/job.ts";
 import { createJob, getJob, isTerminal, listJobs, newId, pushHistory, updateJob } from "./store.ts";
 
@@ -78,26 +78,11 @@ function mustGet(id: string): Job {
   return job;
 }
 
-/** 확인 질문에 답하거나(W1·W6 needs_input), W2 외부 조치 결과(영상 링크)를 넣는다 */
+/** 확인 질문에 답한다(W1·W2·W6 needs_input) */
 export function answer(id: string, raw: string, now = new Date()): Job {
   const text = raw.trim();
   if (!text || text.length > 1000) throw new ServiceError(422, "invalid_answer", "답변은 1–1,000자로 적어 주세요.");
   const job = mustGet(id);
-
-  if (job.status === "awaiting_external_action" && job.workflow === "concept_video") {
-    if (!isHttpUrl(text)) throw new ServiceError(422, "invalid_answer", "http:// 또는 https:// 영상 링크를 붙여 넣어 주세요.");
-    return updateJob(id, (j) => {
-      if (!j.result) return false;
-      j.result.artifactType = "notebook_video";
-      j.result.providerResourceId = undefined;
-      j.result.coverageNotes.push(`영상 링크는 사용자가 직접 입력했습니다(${now.toISOString().slice(0, 16)}Z). 앱이 생성하거나 재생을 확인하지 않았습니다.`);
-      j.result.highlights = [...j.result.highlights.slice(0, 2), "사용자가 입력한 영상 링크 연결됨"];
-      j.result.userLinkUrl = text;
-      j.question = j.question ? { ...j.question, answer: text } : null;
-      j.status = "partial";
-      pushHistory(j, "외부 조치 완료(사용자 입력 영상 링크)", now);
-    }) as Job;
-  }
 
   if (job.status !== "needs_input") throw new ServiceError(409, "not_waiting", "답변을 기다리는 작업이 아닙니다.");
   return updateJob(id, (j) => {

@@ -188,13 +188,13 @@ export function isTerminal(status: JobStatus): boolean {
 
 // ---- 결과물 ----
 
-export function saveArtifact(id: string, content: string | Buffer, ext: "html" | "jpg"): void {
+export function saveArtifact(id: string, content: string | Buffer, ext: "html" | "jpg" | "mp4"): void {
   ensureDirs();
   if (!ID_RE.test(id)) throw new Error("invalid id");
   writeFileAtomic(path.join(sub("artifacts"), `${id}.${ext}`), content);
 }
 
-export function readArtifact(id: string, ext: "html" | "jpg"): Buffer | null {
+export function readArtifact(id: string, ext: "html" | "jpg" | "mp4"): Buffer | null {
   if (!ID_RE.test(id)) return null;
   try {
     return fs.readFileSync(path.join(sub("artifacts"), `${id}.${ext}`));

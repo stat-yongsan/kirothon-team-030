@@ -13,6 +13,7 @@ const runRoute = await import("./run/route");
 const answerRoute = await import("./jobs/[id]/answer/route");
 const cancelRoute = await import("./jobs/[id]/cancel/route");
 const reportRoute = await import("../../r/[id]/route");
+const videoRoute = await import("../../v/[id]/route");
 const protoRawRoute = await import("../../p/[id]/raw/route");
 const protoRoute = await import("../../p/[id]/route");
 
@@ -161,19 +162,29 @@ describe("맡기기·취소·답변 (R2.1, R2.7, R4.4, R5.6)", () => {
     expect(getJob(id)?.status).toBe("queued");
     expect(getJob(id)?.question?.answer).toBe("모델 컨텍스트 프로토콜");
   });
-  it("W2 외부 조치 링크는 http/https만", async () => {
-    const id = (await (await postCapture({ purpose: "concept", output: "video", text: "RAG" })).json()).job.id as string;
-    updateJob(id, (j) => {
-      j.status = "awaiting_external_action";
-      j.result = { jobId: j.id, workflow: j.workflow, status: "partial", title: "RAG", highlights: [], artifactType: "html_report", notionSyncStatus: "not_configured", assumptions: [], coverageNotes: [], sources: [], errors: [], engine: "kiro-cli" };
-    });
-    expect((await answerRoute.POST(postJson(`/api/jamjari/jobs/${id}/answer`, { answer: "javascript:alert(1)" }), params(id))).status).toBe(422);
-    const ok = await answerRoute.POST(postJson(`/api/jamjari/jobs/${id}/answer`, { answer: "https://example.com/video" }), params(id));
-    expect(ok.status).toBe(200);
-    expect(getJob(id)?.result?.userLinkUrl).toBe("https://example.com/video");
-  });
 });
 
+describe("영상 뷰어 /v/{id} (W2)", () => {
+  const VID = "a_fedcba9876543210";
+  const bytes = Buffer.from(Array.from({ length: 100 }, (_, i) => i));
+  it("전체·Range·내려받기·없는 ID를 구분한다", async () => {
+    saveArtifact(VID, bytes, "mp4");
+    const full = await videoRoute.GET(new Request(`${BASE}/v/${VID}`), params(VID));
+    expect(full.status).toBe(200);
+    expect(full.headers.get("content-type")).toBe("video/mp4");
+    expect(full.headers.get("content-length")).toBe("100");
+    const part = await videoRoute.GET(new Request(`${BASE}/v/${VID}`, { headers: { range: "bytes=10-19" } }), params(VID));
+    expect(part.status).toBe(206);
+    expect(part.headers.get("content-range")).toBe("bytes 10-19/100");
+    expect(new Uint8Array(await part.arrayBuffer())[0]).toBe(10);
+    const tail = await videoRoute.GET(new Request(`${BASE}/v/${VID}`, { headers: { range: "bytes=-5" } }), params(VID));
+    expect(tail.headers.get("content-range")).toBe("bytes 95-99/100");
+    expect((await videoRoute.GET(new Request(`${BASE}/v/${VID}`, { headers: { range: "bytes=500-600" } }), params(VID))).status).toBe(416);
+    const dl = await videoRoute.GET(new Request(`${BASE}/v/${VID}?download=1`), params(VID));
+    expect(dl.headers.get("content-disposition")).toContain("attachment");
+    expect((await videoRoute.GET(new Request(`${BASE}/v/x`), params("../jobs/j_0000000000000000"))).status).toBe(404);
+  });
+});
 describe("보고서·체험 뷰어 (R3.6, R5.4, R5.6)", () => {
   const AID = "a_0123456789abcdef";
   it("보고서 /r/{id}: 스크립트 불허 CSP, download=1이면 attachment, 없는 ID 404", async () => {
