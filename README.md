@@ -121,12 +121,19 @@ npm.cmd run worker     # 터미널 2: 야간 워커. 꺼져 있으면 화면에 
 
 macOS·Linux에서는 `npm.cmd` 대신 `npm`을 씁니다(이 환경에서는 확인하지 않았습니다).
 
+휴대폰에서 쓰려면 PC와 같은 Wi-Fi에 연결한 뒤 프로덕션 서버를 네트워크에 엽니다. 휴대폰 브라우저에서 `http://<PC의 IP>:3001`을 엽니다. 같은 네트워크의 누구나 열 수 있으므로 믿을 수 있는 네트워크에서만 씁니다.
+
+```powershell
+npm.cmd run build
+npm.cmd run start -- -p 3001 -H 0.0.0.0   # 워커는 그대로 npm.cmd run worker
+```
+
 kiro-cli 없이 보려면 화면의 **샘플 모드**를 켜고 예시 버튼(예: "아이디어: 점심 메뉴 피로")으로 담은 뒤 맡깁니다. kiro-cli 호출과 외부 접속 없이 같은 파이프라인을 지나고, 결과에 "샘플"이 표시됩니다. 데이터는 `.data/jamjarichae/`(git 제외)에 저장됩니다. 선택 환경변수는 [.env.example](.env.example)에 있습니다.
 
 ## 7. 테스트
 
 ```powershell
-npm.cmd run test                            # Vitest 112개(파일 8개: domain 48, lib 44, api 20)
+npm.cmd run test                            # Vitest 113개(파일 8개: domain 48, lib 44, api 21)
 node scripts/quality.mjs task               # typegen + typecheck + test
 node scripts/quality.mjs release --force    # lint + typegen + typecheck + test + build
 ```

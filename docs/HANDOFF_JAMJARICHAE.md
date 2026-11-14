@@ -2,7 +2,7 @@
 
 갱신: 2026-11-14 14:15 KST(kiro-cli 세션 `sess_5b231bf0`, W5·W6 실제 실행, 제출 레포 push, 연습 템플릿 삭제·README 완성). 이전: 13:36 세션 `sess_b4b2809d`. 제출 18:00(사용자 자료 기준, 현장 재확인).
 
-> 지금 실행 중: dev 서버(cmd pid 20656, http://localhost:3000), 워커 npm pid 20916 / node pid 33668(로그 `.data/worker6.out.log`, 13:44 youtube.ts 수정 반영). 진단 스크립트 `.data/diag-*.ts`, `.data/diag-submit.mjs`(담기+맡기기 API 호출, git 제외).
+> 지금 실행 중: dev 서버(cmd pid 20656, http://localhost:3000), **휴대폰용 프로덕션 서버**(npm pid 26300, `npm.cmd run start -- -p 3001 -H 0.0.0.0`, http://172.24.96.178:3001, 로그 `.data/start3001.out.log`. 코드를 바꾸면 build 후 재기동), 워커 npm pid 20916 / node pid 33668(로그 `.data/worker6.out.log`, 13:44 youtube.ts 수정 반영). 진단 스크립트 `.data/diag-*.ts`, `.data/diag-submit.mjs`(담기+맡기기 API 호출, git 제외).
 
 ## 1. 먼저 읽을 것 (순서)
 
@@ -81,6 +81,7 @@ git: 어제 연습(job-choice) WIP는 타입 오류가 있어 `git stash@{0}`("p
   - README: 템플릿 섹션 전부 채움(문제 정의·기능·시나리오 4단계·기대 효과 표·차별점 표·설치·테스트 표·팀). 스크린샷 4장 `docs/images/`(main·briefing·report-w1·prototype, 14:08–14:10 Edge). 팀 표: `stat-yongsan` / 기획·설계·개발·시연(1인) — 이름은 사용자가 바꿀 수 있음
   - `docs/DEMO.md`: 녹화용 주소 표(결과 주소 7개 HTTP 200 확인 14:10), W5·W6 장면 추가
   - 검사: 테스트 112개, `quality.mjs task` PASS, lint 통과, `release --force` **PASS(14:13:05)**
+- [x] **휴대폰 테스트 주소 (14:16–14:22)**: dev 서버는 LAN에서 HMR·폰트 403 → 프로덕션 서버 3001을 0.0.0.0으로 띄움. 담기 403 `cross_origin` 발견 → `http.ts` guard를 Host 헤더 비교로 수정 + 회귀 테스트(113개). task PASS, release PASS(14:20:03). Edge 390px LAN 주소로 담기→맡기기→완료 확인. `integration-status.md` 3.4절
 - [ ] Google 로그인(JWT): 사용자 결정 "비밀값은 나중에, 로그인은 나중에 붙이자"(13:5x). OAuth 클라이언트 ID·비밀값 받으면 착수
 
 ## 5. 실행 방법

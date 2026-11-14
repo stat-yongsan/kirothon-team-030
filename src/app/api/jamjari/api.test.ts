@@ -60,6 +60,20 @@ describe("쓰기 요청 가드", () => {
     const res = await postCapture({ purpose: "idea", output: "html", text: "메모" }, { "x-jamjari": "1", origin: BASE });
     expect(res.status).toBe(201);
   });
+  it("next start -H 0.0.0.0처럼 request.url이 바인딩 주소여도 Origin과 Host가 같으면 통과, 다르면 403", async () => {
+    const lan = (origin: string) =>
+      jobsRoute.POST(
+        new Request("http://0.0.0.0:3001/api/jamjari/jobs", {
+          method: "POST",
+          body: form({ purpose: "idea", output: "html", text: "메모" }),
+          headers: { "x-jamjari": "1", host: "192.168.0.10:3001", origin },
+        }),
+      );
+    expect((await lan("http://192.168.0.10:3001")).status).toBe(201);
+    const res = await lan("http://evil.example:3001");
+    expect(res.status).toBe(403);
+    expect((await res.json()).error.code).toBe("cross_origin");
+  });
   it("맡기기·취소·답변도 헤더 없으면 403", async () => {
     expect((await runRoute.POST(postJson("/api/jamjari/run", {}, {}))).status).toBe(403);
     expect((await cancelRoute.POST(postJson("/api/jamjari/jobs/j_0000000000000000/cancel", {}, {}), params("j_0000000000000000"))).status).toBe(403);

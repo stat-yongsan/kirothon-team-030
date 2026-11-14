@@ -68,6 +68,14 @@ W5 유튜브 결과는 설계대로 `partial`이다. 요약 근거는 자막뿐�
 - 수정: 프레임만 필요하므로 영상 전용 스트림을 먼저 고르게 바꿨다: `bv*[height<=480][ext=mp4]/bv*[height<=480]/wv*/best[height<=480]/worst`.
 - 확인: 같은 선택식으로 스트림 주소를 받아 ffmpeg로 0:05 프레임 1장(640×480)을 직접 뽑아 봤다. 워커 재시작(npm pid 20916 / node pid 33668, 로그 `.data/worker6.out.log`) 뒤 같은 영상 재실행에서 6장 캡처. `node scripts/quality.mjs task` PASS(13:47). 이 경로의 자동 테스트는 없다(외부 도구 호출).
 
+### 3.4 휴대폰(다른 기기)에서 담기가 403 (14:18 발견, 14:19 수정)
+
+- 증상: 휴대폰 테스트용으로 `npm.cmd run start -- -p 3001 -H 0.0.0.0`을 띄우고 LAN 주소(`http://172.24.96.178:3001`)로 열었다. 같은 화면에서 `＋ 생각 담기`를 눌렀는데 `403 cross_origin`이 났다.
+- 원인: `http.ts` `guard`가 Origin을 `request.url`의 호스트와 비교했다. 이 서버에서 `request.url`은 브라우저가 연 주소가 아니라 바인딩 주소(`0.0.0.0:3001`)를 담았다. localhost로만 쓸 때는 둘이 같아 드러나지 않았다.
+- 수정: 브라우저가 보낸 `Host` 헤더와 비교한다(없으면 `request.url`). `x-jamjari` 헤더 요구는 그대로다. 회귀 테스트 1개를 `api.test.ts`에 추가했다(바인딩 주소 + 같은 Origin/Host → 201, 다른 Origin → 403).
+- 확인: `quality.mjs task` PASS, `release --force` PASS(14:20:03). 재기동한 3001 서버에 같은 Origin 맡기기 200, 다른 Origin 403. Edge 390×844로 LAN 주소를 열어 샘플 아이디어 담기 → 맡기기 → 12초 안에 브리핑 "맡긴 14개 중 완료 10"(가로 넘침 없음). 결과 주소 4개 LAN에서 200.
+- 참고: dev 서버(`next dev`)를 LAN 주소로 열면 HMR 웹소켓과 폰트가 403이다(Next 16의 dev 출처 제한). 휴대폰 테스트는 프로덕션 서버로 한다.
+
 ## 4. 재시작 복구 실증 (R2.3, R2.4)
 
 `j_ffefff1abb396176` 기록(UTC):

@@ -8,14 +8,17 @@ export function fail(status: number, code: string, message: string, details: str
 /**
  * - Vercel 등 서버리스에서는 파일 저장소가 영속되지 않으므로 거부한다(로컬·상시 서버 전용).
  * - 쓰기 요청은 사용자 정의 헤더(x-jamjari: 1)를 요구한다. 다른 사이트의 폼 전송은 이 헤더를 붙일 수 없다(CORS 사전 요청 실패).
- * - Origin 헤더가 있으면 같은 호스트여야 한다.
+ * - Origin 헤더가 있으면 브라우저가 보낸 Host 헤더와 같은 호스트여야 한다. `next start -H 0.0.0.0`에서는 request.url이
+ *   바인딩 주소(0.0.0.0)를 담아 같은 화면에서 보낸 요청도 달라 보이므로 Host 헤더를 우선한다(2026-11-14 휴대폰 접속에서 확인).
+ *   Host는 다른 사이트의 브라우저 스크립트가 바꿀 수 없다.
  */
 export function guard(request: Request, write: boolean): Response | null {
   if (process.env.VERCEL) return fail(503, "local_only", "잠자리채 MVP의 야간 큐는 로컬·상시 서버에서만 동작합니다.");
   const origin = request.headers.get("origin");
   if (origin) {
     try {
-      if (new URL(origin).host !== new URL(request.url).host) return fail(403, "cross_origin", "다른 출처의 요청은 받지 않습니다.");
+      const host = request.headers.get("host") || new URL(request.url).host;
+      if (new URL(origin).host !== host) return fail(403, "cross_origin", "다른 출처의 요청은 받지 않습니다.");
     } catch {
       return fail(403, "cross_origin", "다른 출처의 요청은 받지 않습니다.");
     }

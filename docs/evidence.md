@@ -39,7 +39,7 @@
 | R5.4 신뢰 템플릿·스크립트 불허 CSP | `render.ts`, `r/[id]/route.ts` | `api.test.ts` CSP | 실측 13:25: 보고서 스크립트 0개, CSP 헤더 |
 | R5.5 샘플 모드 외부 호출 없음 | `worker.ts` `sampleOr` | `worker.test.ts` "샘플 모드는 엔진·URL 호출 없이 샘플 표시" | 실측: 샘플 카드 "샘플 결과" 배지 |
 | R5.6 ID 검사·404 | `store.ts` `ID_RE`, `service.ts` `mustGet` | `store.test.ts`, `api.test.ts` "없는 ID·경로 조작 ID는 404" | 테스트만 |
-| 쓰기 요청 가드(설계) | `http.ts` `guard` | `api.test.ts` 헤더 없음 403, 다른 Origin 403 | 테스트만 |
+| 쓰기 요청 가드(설계) | `http.ts` `guard` | `api.test.ts` 헤더 없음 403, 다른 Origin 403, 바인딩 주소(0.0.0.0)여도 Origin=Host면 통과 | 실측 14:20: 휴대폰 접속용 `next start -H 0.0.0.0`(LAN IP)에서 같은 Origin 200, 다른 Origin 403. 수정 전에는 같은 화면의 담기도 403(`integration-status.md` 3.4절) |
 
 ## 2. Kiro 활용 증거 (실제 기록만)
 
@@ -57,7 +57,7 @@
 ## 3. 검사 결과
 
 - `node scripts/quality.mjs task`: PASS(13:26)
-- 테스트: 112개 통과(파일 8개): domain 48, lib 44, api 20. 14:05에 연습 템플릿 테스트 55개(파일 6개)를 코드와 함께 지움. 그 전에는 167개
+- 테스트: 113개 통과(파일 8개): domain 48, lib 44, api 21(14:18 Host 회귀 테스트 1개 추가). 14:05에 연습 템플릿 테스트 55개(파일 6개)를 코드와 함께 지움. 그 전에는 167개
 - `node scripts/quality.mjs release --force`: 아래 4절에 최종 결과 기록
 
 ## 4. 최종 release 검사

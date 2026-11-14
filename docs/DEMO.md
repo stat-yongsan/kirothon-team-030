@@ -18,6 +18,8 @@
 
 결과 주소는 `.data/jamjarichae/`에 저장된 결과물이다. 이 폴더를 지우면 주소도 사라진다.
 
+휴대폰(같은 Wi-Fi): http://172.24.96.178:3001 (프로덕션 서버 `npm.cmd run start -- -p 3001 -H 0.0.0.0`). 위 결과 주소도 `localhost:3000`을 `172.24.96.178:3001`로 바꾸면 열린다. PC IP는 Wi-Fi가 바뀌면 달라진다(14:20 기준).
+
 ## 시연 전 준비 (5분 전)
 
 1. `npm.cmd run dev` → http://localhost:3000
@@ -52,4 +54,4 @@
 - 브라우저(13:24–13:31): W3 HTML 아이디어 5개·스크립트 0개 / W4 버튼 클릭 화면 변화·iframe 쿠키 SecurityError / W1 HTML 9개 절·출처 링크 6개·CSP / 잘못된 조합 안내·담기 버튼 잠김 / 샘플 담기 → 맡기기(1) → 10초 안에 완료 / 연결 상태 6줄
 - 브라우저(13:48): W5 유튜브 보고서 이미지 6장(640×480)·시점 링크 6개 / 메인 브리핑 "맡긴 13개 중 완료 9, 부분 완료 2, 외부 조치 필요 2"
 - 14:10 위 표의 결과 주소 7개 모두 HTTP 200, 내려받기 주소는 `attachment`
-- 테스트 112개 통과, `node scripts/quality.mjs release --force` 결과는 `docs/evidence.md` 끝에 기록
+- 테스트 113개 통과, `node scripts/quality.mjs release --force` 결과는 `docs/evidence.md` 끝에 기록
