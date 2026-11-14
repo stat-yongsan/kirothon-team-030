@@ -1,0 +1,402 @@
+{
+  "id": "j_7ecaed56c1ab51ab",
+  "userId": "owner",
+  "workflow": "concept_report",
+  "status": "completed",
+  "stage": null,
+  "input": {
+    "text": "확산 모델(Diffusion Model)",
+    "url": null,
+    "image": null
+  },
+  "sample": false,
+  "capturedAt": "2026-11-14T07:02:43.821Z",
+  "captureDate": "2026-11-14",
+  "timeZone": "Asia/Seoul",
+  "runAt": null,
+  "attempts": 1,
+  "leaseUntil": null,
+  "workerId": "w_ebd64ce4",
+  "idempotencyKey": "a0c9588d-3491-4014-9e05-6ff98e798aeb",
+  "steps": {
+    "ingest": {
+      "status": "done",
+      "at": "2026-11-14T07:02:44.676Z"
+    },
+    "research": {
+      "status": "done",
+      "at": "2026-11-14T07:03:39.410Z"
+    },
+    "verify": {
+      "status": "done",
+      "at": "2026-11-14T07:03:40.950Z"
+    },
+    "store_artifact": {
+      "status": "done",
+      "at": "2026-11-14T07:03:40.981Z"
+    },
+    "sync_notion": {
+      "status": "done",
+      "at": "2026-11-14T07:03:42.326Z"
+    }
+  },
+  "checkpoint": {
+    "ingest": {
+      "fetched": null,
+      "notes": []
+    },
+    "research": {
+      "term": "확산 모델(Diffusion Model)",
+      "ambiguity": {
+        "isAmbiguous": true,
+        "meanings": [
+          "생성 AI의 확산 모델(노이즈를 단계적으로 제거해 데이터를 만드는 모델)",
+          "물리·사회과학의 확산 모델(입자·정보·혁신의 퍼짐을 설명하는 모델)"
+        ],
+        "blockingQuestion": null,
+        "chosenInterpretation": "머신러닝의 생성 모델인 확산 모델(DDPM 계열)로 해석했다."
+      },
+      "oneLine": "데이터에 노이즈를 조금씩 섞는 과정을 신경망이 거꾸로 되돌리도록 학습시켜, 순수한 노이즈에서 새 데이터를 만들어 내는 생성 모델이다.",
+      "example": "깨끗한 사진에 TV 화면의 눈처럼 잡음을 여러 단계에 걸쳐 입히면 결국 알아볼 수 없는 잡음만 남는다. 확산 모델은 이 과정을 거꾸로 배워서, 잡음 화면에서 시작해 한 단계씩 잡음을 걷어내며 새 그림을 완성한다.",
+      "howItWorks": [
+        "순방향 과정: 학습 데이터에 여러 시점(timestep)에 걸쳐 가우시안 노이즈를 조금씩 더해 최종적으로 거의 순수한 노이즈로 만든다. 이 과정은 고정되어 있고 학습하지 않는다.",
+        "역방향 과정: 신경망이 각 단계에서 섞인 노이즈를 예측하거나 한 단계 덜 망가진 상태를 예측하도록 학습한다. 학습 목표는 가중 변분 하한(DDPM)이며 노이즈 예측 손실로 단순화된다.",
+        "생성(샘플링): 무작위 노이즈에서 시작해 학습된 역방향 과정을 수십~수천 번 반복해 깨끗한 샘플을 얻는다.",
+        "조건 지정: 텍스트 등 조건을 넣어 원하는 결과 쪽으로 생성을 유도할 수 있다(자료에서 직접 확인하지 못한 일반 지식이므로 세부 방식은 추가 확인 필요).",
+        "속도 개선: 단계 수를 줄이는 증류(distillation), 일관성 증류(consistency distillation) 같은 방법이 연구되고 있다."
+      ],
+      "keyTerms": [
+        {
+          "term": "순방향(확산) 과정",
+          "meaning": "데이터에 노이즈를 단계적으로 더하는 고정된 과정"
+        },
+        {
+          "term": "역방향(생성) 과정",
+          "meaning": "노이즈를 단계적으로 제거하도록 학습된 신경망 과정"
+        },
+        {
+          "term": "DDPM",
+          "meaning": "Denoising Diffusion Probabilistic Models. 2020년 Ho 등이 고품질 이미지 합성을 보인 확산 모델"
+        },
+        {
+          "term": "타임스텝",
+          "meaning": "노이즈를 더하거나 걷어내는 단계의 번호"
+        },
+        {
+          "term": "샘플링 단계 수",
+          "meaning": "한 샘플을 만드는 데 필요한 반복 횟수. 많을수록 느리다"
+        },
+        {
+          "term": "증류(distillation)",
+          "meaning": "많은 단계가 필요한 교사 모델을 적은 단계로 흉내 내는 학생 모델로 압축하는 기법"
+        },
+        {
+          "term": "확산 언어 모델",
+          "meaning": "텍스트 생성에 확산 방식을 적용한 모델. 여러 토큰을 병렬로 생성할 가능성이 있다"
+        },
+        {
+          "term": "FID",
+          "meaning": "생성 이미지 품질을 재는 지표 중 하나. 낮을수록 좋다"
+        }
+      ],
+      "history": [
+        {
+          "when": "2015",
+          "event": "확산 기반 생성 모델이 처음 소개되었다는 설명이 있다(출처 글의 서술).",
+          "sourceIds": [
+            "S1"
+          ]
+        },
+        {
+          "when": "2020",
+          "event": "Ho 등이 DDPM 논문을 발표해 CIFAR10에서 FID 3.17을 보고하고 이 접근을 널리 알렸다.",
+          "sourceIds": [
+            "S1",
+            "S2"
+          ]
+        },
+        {
+          "when": "2021",
+          "event": "Improved DDPM이 몇 가지 단순한 수정으로 로그우도 경쟁력을 확보하면서 샘플 품질을 유지했다.",
+          "sourceIds": [
+            "S3"
+          ]
+        },
+        {
+          "when": "2024",
+          "event": "DDPM을 수학적으로 엄밀하게 소개하는 개관 논문이 arXiv에 게시되었다.",
+          "sourceIds": [
+            "S4"
+          ]
+        },
+        {
+          "when": "2025",
+          "event": "Duo가 균일 상태 이산 확산 언어 모델의 학습 속도를 높이고 이산 일관성 증류로 샘플링을 약 100배 빠르게 한다고 보고했다(ICML 2025).",
+          "sourceIds": [
+            "S5"
+          ]
+        },
+        {
+          "when": "2026",
+          "event": "T3D가 확산 대형 언어 모델의 적은 단계 디코딩을 궤적 자기 증류로 개선하는 방법을 제안했다.",
+          "sourceIds": [
+            "S6"
+          ]
+        }
+      ],
+      "canDo": [
+        "노이즈에서 고품질 이미지를 합성한다(DDPM이 CIFAR10에서 FID 3.17 보고).",
+        "로그우도 면에서도 경쟁력 있는 결과를 낼 수 있다(Improved DDPM).",
+        "텍스트 생성에도 적용된다(확산 언어 모델).",
+        "점진적 손실 압축 해석이 가능하다(DDPM 논문).",
+        "적대적 예제를 정화하는 방어 기법으로 시험되었다(arXiv 2301.06871 프로젝트 보고)."
+      ],
+      "hardYet": [
+        "샘플링에 많은 반복 단계가 필요해 느리다.",
+        "확산 언어 모델은 단계 수를 줄이면 토큰 분해(factorization) 오류로 품질이 크게 떨어진다.",
+        "확산 언어 모델은 자기회귀 모델 및 마스크 확산 모델보다 성능이 낮은 경우가 많다(Duo 논문 서술).",
+        "적은 단계 생성 방법은 교사 모델이 필요하고 추가 학습 비용이 든다.",
+        "이 보고서는 이미지 품질 비교나 최신 상용 모델 성능을 직접 검증하지 않았다."
+      ],
+      "recentResearch": [
+        {
+          "title": "Few-Step Diffusion Language Models via Trajectory Self-Distillation (T3D)",
+          "authors": "Tunyu Zhang, Xinxi Zhang, Ligong Han 외",
+          "date": "2026-02",
+          "venue": "arXiv (cs.CL)",
+          "kind": "preprint",
+          "contribution": "적은 단계 학생 모델이 전체 단계 교사의 생성 궤적을 따르도록 자기 증류하고, 직접 판별 최적화(DDO)를 더해 추론·코드 생성 벤치마크에서 적은 단계와 전체 단계 디코딩의 격차를 크게 줄였다고 보고한다.",
+          "limitation": "프리프린트이며 심사 여부를 확인하지 못했다. 추론·코드 벤치마크 중심이라 다른 영역 일반화는 확인하지 못했다.",
+          "sourceId": "S6"
+        },
+        {
+          "title": "The Diffusion Duality (Duo)",
+          "authors": "Subham Sekhar Sahoo 외",
+          "date": "2025-06",
+          "venue": "ICML 2025 (arXiv 저자 표기 기준)",
+          "kind": "peer_reviewed",
+          "contribution": "균일 상태 이산 확산이 가우시안 확산에서 자연스럽게 나온다는 점을 이용해 커리큘럼 학습으로 학습 속도를 2배로 높이고, 이산 일관성 증류로 샘플링을 약 두 자릿수 가속한다고 보고한다.",
+          "limitation": "ICML 게재 여부는 arXiv 주석으로만 확인했다. 7개 벤치마크 중 3개에서만 자기회귀 모델의 zero-shot perplexity를 앞섰다.",
+          "sourceId": "S5"
+        }
+      ],
+      "recentResearchNote": "지난 12개월(2025-11~2026-11) 안에서 확인한 논문은 T3D 1편이다. Duo는 2025-06 최초 제출이라 12개월보다 오래되었으나(v3는 2025-12) 주제 보완을 위해 포함했다. 검색 결과의 날짜 정보 일부가 불일치해 arXiv 초록 페이지의 제출 이력을 기준으로 삼았다.",
+      "experiment": "30분 안에 Hugging Face diffusers의 사전 학습된 DDPM(예: google/ddpm-cifar10-32)을 불러 steps를 1000, 100, 20으로 바꿔 가며 같은 시드로 이미지 8장을 생성하고, 단계 수에 따른 품질과 소요 시간을 표로 비교한다. 이 모델명과 라이브러리 사용법은 이번 조사에서 직접 확인하지 못했으므로 실행 전에 공식 문서로 확인한다.",
+      "searchScope": "2026-11-14 기준 웹 검색 2회(확산 모델 개요·DDPM 역사, 확산 모델 증류·확산 언어 모델 최신 논문)와 arXiv 초록 3건 열람. 최근 12개월을 먼저 찾았고 부족해 2025-06 논문을 추가했다. 이미지·영상 분야 최신 논문은 찾지 못했다.",
+      "sources": [
+        {
+          "id": "S1",
+          "title": "In-Depth Guide to Denoising Diffusion Probabilistic Models (DDPM)",
+          "url": "https://learnopencv.com/denoising-diffusion-probabilistic-models/",
+          "publishedAt": "2024-04"
+        },
+        {
+          "id": "S2",
+          "title": "Denoising Diffusion Probabilistic Models (Ho et al.)",
+          "url": "https://arxiv.org/abs/2006.11239",
+          "publishedAt": "2020-06"
+        },
+        {
+          "id": "S3",
+          "title": "Improved Denoising Diffusion Probabilistic Models",
+          "url": "https://arxiv.org/abs/2102.09672",
+          "publishedAt": "2021-02"
+        },
+        {
+          "id": "S4",
+          "title": "An overview of diffusion models for generative artificial intelligence",
+          "url": "https://arxiv.org/abs/2412.01371",
+          "publishedAt": "2024-12"
+        },
+        {
+          "id": "S5",
+          "title": "The Diffusion Duality",
+          "url": "https://arxiv.org/abs/2506.10892",
+          "publishedAt": "2025-06"
+        },
+        {
+          "id": "S6",
+          "title": "Few-Step Diffusion Language Models via Trajectory Self-Distillation",
+          "url": "https://arxiv.org/abs/2602.12262",
+          "publishedAt": "2026-02"
+        }
+      ],
+      "highlights": [
+        "확산 모델은 노이즈를 단계적으로 더하고 신경망이 이를 거꾸로 제거하도록 학습해 새 데이터를 만든다.",
+        "2020년 DDPM이 CIFAR10에서 FID 3.17을 보고하며 이미지 합성에서 주목받았다.",
+        "최근 연구의 초점 하나는 샘플링 단계 수를 줄이는 증류이며, 확산 언어 모델에서 활발하다."
+      ],
+      "nextAction": "내일 아침 diffusers로 단계 수별 생성 비교 실험을 실행하고, 이미지·영상 분야 최신 논문을 추가 조사한다."
+    },
+    "verify": {
+      "sources": [
+        {
+          "id": "S1",
+          "title": "In-Depth Guide to Denoising Diffusion Probabilistic Models (DDPM)",
+          "url": "https://learnopencv.com/denoising-diffusion-probabilistic-models/",
+          "publishedAt": "2024-04",
+          "accessedAt": "2026-11-14T07:03:39.424Z",
+          "reachable": true,
+          "httpStatus": 200
+        },
+        {
+          "id": "S2",
+          "title": "Denoising Diffusion Probabilistic Models (Ho et al.)",
+          "url": "https://arxiv.org/abs/2006.11239",
+          "publishedAt": "2020-06",
+          "accessedAt": "2026-11-14T07:03:39.424Z",
+          "reachable": true,
+          "httpStatus": 206
+        },
+        {
+          "id": "S3",
+          "title": "Improved Denoising Diffusion Probabilistic Models",
+          "url": "https://arxiv.org/abs/2102.09672",
+          "publishedAt": "2021-02",
+          "accessedAt": "2026-11-14T07:03:39.424Z",
+          "reachable": true,
+          "httpStatus": 206
+        },
+        {
+          "id": "S4",
+          "title": "An overview of diffusion models for generative artificial intelligence",
+          "url": "https://arxiv.org/abs/2412.01371",
+          "publishedAt": "2024-12",
+          "accessedAt": "2026-11-14T07:03:39.424Z",
+          "reachable": true,
+          "httpStatus": 206
+        },
+        {
+          "id": "S5",
+          "title": "The Diffusion Duality",
+          "url": "https://arxiv.org/abs/2506.10892",
+          "publishedAt": "2025-06",
+          "accessedAt": "2026-11-14T07:03:39.424Z",
+          "reachable": true,
+          "httpStatus": 206
+        },
+        {
+          "id": "S6",
+          "title": "Few-Step Diffusion Language Models via Trajectory Self-Distillation",
+          "url": "https://arxiv.org/abs/2602.12262",
+          "publishedAt": "2026-02",
+          "accessedAt": "2026-11-14T07:03:39.424Z",
+          "reachable": true,
+          "httpStatus": 206
+        }
+      ],
+      "notes": [
+        "출처 6개 중 6개가 접속 시 응답했습니다(코드 확인)."
+      ]
+    },
+    "store_artifact": {
+      "artifactId": "a_c31b6e954ab19020"
+    },
+    "sync_notion": {
+      "status": "synced",
+      "note": "Notion 날짜별 페이지에 기록했습니다.",
+      "url": ""
+    }
+  },
+  "question": null,
+  "result": {
+    "jobId": "j_7ecaed56c1ab51ab",
+    "workflow": "concept_report",
+    "status": "completed",
+    "title": "확산 모델(Diffusion Model)",
+    "highlights": [
+      "확산 모델은 노이즈를 단계적으로 더하고 신경망이 이를 거꾸로 제거하도록 학습해 새 데이터를 만든다.",
+      "2020년 DDPM이 CIFAR10에서 FID 3.17을 보고하며 이미지 합성에서 주목받았다.",
+      "최근 연구의 초점 하나는 샘플링 단계 수를 줄이는 증류이며, 확산 언어 모델에서 활발하다."
+    ],
+    "artifactType": "html_report",
+    "notionSyncStatus": "synced",
+    "assumptions": [
+      "머신러닝의 생성 모델인 확산 모델(DDPM 계열)로 해석했다."
+    ],
+    "coverageNotes": [
+      "출처 6개 중 6개가 접속 시 응답했습니다(코드 확인).",
+      "검색 범위: 2026-11-14 기준 웹 검색 2회(확산 모델 개요·DDPM 역사, 확산 모델 증류·확산 언어 모델 최신 논문)와 arXiv 초록 3건 열람. 최근 12개월을 먼저 찾았고 부족해 2025-06 논문을 추가했다. 이미지·영상 분야 최신 논문은 찾지 못했다.",
+      "Notion 날짜별 페이지에 기록했습니다."
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "In-Depth Guide to Denoising Diffusion Probabilistic Models (DDPM)",
+        "url": "https://learnopencv.com/denoising-diffusion-probabilistic-models/",
+        "publishedAt": "2024-04",
+        "accessedAt": "2026-11-14T07:03:39.424Z",
+        "reachable": true,
+        "httpStatus": 200
+      },
+      {
+        "id": "S2",
+        "title": "Denoising Diffusion Probabilistic Models (Ho et al.)",
+        "url": "https://arxiv.org/abs/2006.11239",
+        "publishedAt": "2020-06",
+        "accessedAt": "2026-11-14T07:03:39.424Z",
+        "reachable": true,
+        "httpStatus": 206
+      },
+      {
+        "id": "S3",
+        "title": "Improved Denoising Diffusion Probabilistic Models",
+        "url": "https://arxiv.org/abs/2102.09672",
+        "publishedAt": "2021-02",
+        "accessedAt": "2026-11-14T07:03:39.424Z",
+        "reachable": true,
+        "httpStatus": 206
+      },
+      {
+        "id": "S4",
+        "title": "An overview of diffusion models for generative artificial intelligence",
+        "url": "https://arxiv.org/abs/2412.01371",
+        "publishedAt": "2024-12",
+        "accessedAt": "2026-11-14T07:03:39.424Z",
+        "reachable": true,
+        "httpStatus": 206
+      },
+      {
+        "id": "S5",
+        "title": "The Diffusion Duality",
+        "url": "https://arxiv.org/abs/2506.10892",
+        "publishedAt": "2025-06",
+        "accessedAt": "2026-11-14T07:03:39.424Z",
+        "reachable": true,
+        "httpStatus": 206
+      },
+      {
+        "id": "S6",
+        "title": "Few-Step Diffusion Language Models via Trajectory Self-Distillation",
+        "url": "https://arxiv.org/abs/2602.12262",
+        "publishedAt": "2026-02",
+        "accessedAt": "2026-11-14T07:03:39.424Z",
+        "reachable": true,
+        "httpStatus": 206
+      }
+    ],
+    "errors": [],
+    "engine": "kiro-cli",
+    "nextAction": "내일 아침 diffusers로 단계 수별 생성 비교 실험을 실행하고, 이미지·영상 분야 최신 논문을 추가 조사한다.",
+    "artifactId": "a_c31b6e954ab19020",
+    "artifactUrl": "/r/a_c31b6e954ab19020",
+    "downloadUrl": "/r/a_c31b6e954ab19020?download=1"
+  },
+  "history": [
+    {
+      "at": "2026-11-14T07:02:43.821Z",
+      "event": "담고 바로 맡김"
+    },
+    {
+      "at": "2026-11-14T07:02:44.579Z",
+      "event": "실행 시작(시도 1)"
+    },
+    {
+      "at": "2026-11-14T07:03:42.334Z",
+      "event": "completed (completed)"
+    }
+  ],
+  "createdAt": "2026-11-14T07:02:43.821Z",
+  "updatedAt": "2026-11-14T07:03:42.334Z",
+  "completedAt": "2026-11-14T07:03:42.334Z"
+}

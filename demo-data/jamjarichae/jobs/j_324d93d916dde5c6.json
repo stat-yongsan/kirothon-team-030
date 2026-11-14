@@ -1,0 +1,167 @@
+{
+  "id": "j_324d93d916dde5c6",
+  "userId": "owner",
+  "workflow": "calendar_event",
+  "status": "completed",
+  "stage": null,
+  "input": {
+    "text": "[잠자리채 테스트] 2026년 11월 20일(금) 오후 7시~9시 강남역 스터디카페에서 AI 논문 스터디",
+    "url": null,
+    "image": null
+  },
+  "sample": false,
+  "capturedAt": "2026-11-14T07:03:38.667Z",
+  "captureDate": "2026-11-14",
+  "timeZone": "Asia/Seoul",
+  "runAt": null,
+  "attempts": 1,
+  "leaseUntil": null,
+  "workerId": "w_ebd64ce4",
+  "idempotencyKey": "8a32e766-7352-45a8-af33-8b3acb4be567",
+  "steps": {
+    "ingest": {
+      "status": "done",
+      "at": "2026-11-14T07:10:37.632Z"
+    },
+    "generate": {
+      "status": "done",
+      "at": "2026-11-14T07:10:46.800Z"
+    },
+    "verify": {
+      "status": "done",
+      "at": "2026-11-14T07:10:46.819Z"
+    },
+    "external_action": {
+      "status": "done",
+      "at": "2026-11-14T07:10:47.602Z"
+    },
+    "store_artifact": {
+      "status": "done",
+      "at": "2026-11-14T07:10:47.621Z"
+    },
+    "sync_notion": {
+      "status": "done",
+      "at": "2026-11-14T07:10:48.551Z"
+    }
+  },
+  "checkpoint": {
+    "ingest": {
+      "fetched": null,
+      "notes": []
+    },
+    "generate": {
+      "candidates": [
+        {
+          "kind": "event",
+          "title": "AI 논문 스터디",
+          "date": "2026-11-20",
+          "yearStated": true,
+          "startTime": "19:00",
+          "endTime": "21:00",
+          "timezone": null,
+          "location": "강남역 스터디카페",
+          "excerpt": "2026년 11월 20일(금) 오후 7시~9시 강남역 스터디카페에서 AI 논문 스터디"
+        }
+      ],
+      "notes": []
+    },
+    "verify": {
+      "status": "ready",
+      "event": {
+        "title": "AI 논문 스터디",
+        "date": "2026-11-20",
+        "startTime": "19:00",
+        "endTime": "21:00",
+        "timeZone": "Asia/Seoul",
+        "location": "강남역 스터디카페",
+        "startUtc": "2026-11-20T10:00:00.000Z",
+        "endUtc": "2026-11-20T12:00:00.000Z",
+        "excerpt": "2026년 11월 20일(금) 오후 7시~9시 강남역 스터디카페에서 AI 논문 스터디"
+      },
+      "question": null,
+      "reminders": [
+        {
+          "minutes": 1440,
+          "label": "전날 같은 시각",
+          "atUtc": "2026-11-19T10:00:00.000Z",
+          "alreadyPassed": false
+        },
+        {
+          "minutes": 0,
+          "label": "당일 시작 시각",
+          "atUtc": "2026-11-20T10:00:00.000Z",
+          "alreadyPassed": false
+        }
+      ],
+      "assumptions": [
+        "원문에 시간대가 없어 사용자 시간대(Asia/Seoul)로 계산했습니다."
+      ],
+      "notes": []
+    },
+    "external_action": {
+      "state": "created",
+      "eventId": "jjr3c9323bce882e5048672004d75e5",
+      "htmlLink": "",
+      "reminders": [
+        1440,
+        0
+      ],
+      "existing": false
+    },
+    "store_artifact": {
+      "artifactId": "a_cc63beaee5a00125"
+    },
+    "sync_notion": {
+      "status": "synced",
+      "note": "Notion 날짜별 페이지에 기록했습니다.",
+      "url": ""
+    }
+  },
+  "question": null,
+  "result": {
+    "jobId": "j_324d93d916dde5c6",
+    "workflow": "calendar_event",
+    "status": "completed",
+    "title": "AI 논문 스터디",
+    "highlights": [
+      "2026-11-20 19:00–21:00 AI 논문 스터디",
+      "알림: 전날 같은 시각, 당일 시작 시각",
+      "Google Calendar에 일정을 만들었습니다."
+    ],
+    "artifactType": "calendar_event",
+    "notionSyncStatus": "synced",
+    "assumptions": [
+      "원문에 시간대가 없어 사용자 시간대(Asia/Seoul)로 계산했습니다."
+    ],
+    "coverageNotes": [
+      "Google Calendar 일정 생성. 알림 1440분 전, 시작 시각 등록.",
+      "알림을 등록한 것과 기기에 알림이 실제로 도착하는지는 별개입니다.",
+      "Notion 날짜별 페이지에 기록했습니다.",
+      "공개 시연판: 개인 Google Calendar 일정 링크(계정 정보 포함)는 숨겼습니다. 로컬 실행에서는 일정 URL이 표시됩니다."
+    ],
+    "sources": [],
+    "errors": [],
+    "engine": "kiro-cli",
+    "artifactId": "a_cc63beaee5a00125",
+    "artifactUrl": null,
+    "downloadUrl": "/r/a_cc63beaee5a00125?download=1",
+    "providerResourceId": "jjr3c9323bce882e5048672004d75e5"
+  },
+  "history": [
+    {
+      "at": "2026-11-14T07:03:38.667Z",
+      "event": "담고 바로 맡김"
+    },
+    {
+      "at": "2026-11-14T07:10:37.559Z",
+      "event": "실행 시작(시도 1)"
+    },
+    {
+      "at": "2026-11-14T07:10:48.559Z",
+      "event": "completed (completed)"
+    }
+  ],
+  "createdAt": "2026-11-14T07:03:38.667Z",
+  "updatedAt": "2026-11-14T07:10:48.559Z",
+  "completedAt": "2026-11-14T07:10:48.559Z"
+}

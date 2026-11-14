@@ -3,6 +3,21 @@
 > "날아가는 생각, 잠자리에서 잡아드립니다"
 > 기록 2026-11-14 14:10 KST, 14:45 검수 대응(바로 정리·상태 구분) 반영. 아래 화면 문구·숫자는 이 PC에서 브라우저(Edge, Playwright MCP)로 실제로 본 것이다(13:24–13:48). 실행 기록은 `docs/integration-status.md`, 요구→코드→테스트 대응은 `docs/evidence.md`.
 
+## 공개 시연판 (Vercel, 결과 보기 전용 · 2026-11-14 16:40 배포)
+
+어디서나 열린다. 16:02–16:13 실제 실행 결과 7건을 스냅샷(`demo-data/`)으로 넣었다. 개인 Calendar·Notion 링크는 뺐다. 담기·맡기기는 503 `public_demo`로 거부된다.
+
+| 장면 | 주소 |
+|---|---|
+| 메인 화면 | https://jamjarichae.vercel.app |
+| W1 개념 HTML(확산 모델) | https://jamjarichae.vercel.app/r/a_c31b6e954ab19020 |
+| W1 개념 HTML(URL 입력, RAG) | https://jamjarichae.vercel.app/r/a_c8eb9b1ce6afeb91 |
+| W2 영상 MP4(61초) | https://jamjarichae.vercel.app/v/a_d8b8271dd1dd0b4b |
+| W3 아이디어 5개 | https://jamjarichae.vercel.app/r/a_2ba0e7d5e06002ca |
+| W4 체험 페이지 | https://jamjarichae.vercel.app/p/a_716465a079ac68d5 |
+| W5 유튜브 요약 | https://jamjarichae.vercel.app/r/a_e55b0447979b554c |
+| W6 일정 판정 HTML | https://jamjarichae.vercel.app/r/a_cc63beaee5a00125 |
+
 ## 녹화용 주소 (이 PC에서 dev 서버·워커가 켜져 있을 때)
 
 | 장면 | 주소 | 내용 |

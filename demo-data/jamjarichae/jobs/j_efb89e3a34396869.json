@@ -1,0 +1,364 @@
+{
+  "id": "j_efb89e3a34396869",
+  "userId": "owner",
+  "workflow": "concept_video",
+  "status": "completed",
+  "stage": null,
+  "input": {
+    "text": "확산 모델(Diffusion Model)",
+    "url": null,
+    "image": null
+  },
+  "sample": false,
+  "capturedAt": "2026-11-14T07:03:25.576Z",
+  "captureDate": "2026-11-14",
+  "timeZone": "Asia/Seoul",
+  "runAt": null,
+  "attempts": 1,
+  "leaseUntil": null,
+  "workerId": "w_ebd64ce4",
+  "idempotencyKey": "fdcbf0b0-f60d-4c06-84bd-c109453ae1f3",
+  "steps": {
+    "ingest": {
+      "status": "done",
+      "at": "2026-11-14T07:03:42.406Z"
+    },
+    "research": {
+      "status": "done",
+      "at": "2026-11-14T07:04:32.886Z"
+    },
+    "verify": {
+      "status": "done",
+      "at": "2026-11-14T07:04:33.043Z"
+    },
+    "store_artifact": {
+      "status": "done",
+      "at": "2026-11-14T07:04:33.068Z"
+    },
+    "render_video": {
+      "status": "done",
+      "at": "2026-11-14T07:08:54.303Z"
+    },
+    "sync_notion": {
+      "status": "done",
+      "at": "2026-11-14T07:08:55.577Z"
+    }
+  },
+  "checkpoint": {
+    "ingest": {
+      "fetched": null,
+      "notes": []
+    },
+    "research": {
+      "term": "확산 모델(Diffusion Model)",
+      "ambiguity": {
+        "isAmbiguous": true,
+        "meanings": [
+          "생성형 AI의 확산 모델(노이즈를 점진적으로 제거해 데이터를 만드는 모델)",
+          "혁신·기술 확산 모델(사회과학의 diffusion of innovations)",
+          "물리·화학의 확산 방정식 모델"
+        ],
+        "blockingQuestion": null,
+        "chosenInterpretation": "머신러닝의 생성 모델인 확산 모델(DDPM 계열). 메모에 영문 'Diffusion Model'이 병기되어 있어 이 해석을 골랐다."
+      },
+      "oneLine": "데이터에 노이즈를 단계적으로 더하는 과정을 역으로 학습해, 순수 노이즈에서 이미지 같은 데이터를 만들어 내는 생성 모델이다.",
+      "example": "사진에 지지직 노이즈를 조금씩 얹어 완전한 잡음으로 만든 뒤, 그 과정을 거꾸로 되돌리는 법을 신경망에게 가르친다. 학습이 끝나면 무작위 잡음에서 시작해 노이즈를 한 단계씩 걷어내며 새 그림을 얻는다.",
+      "howItWorks": [
+        "정방향 과정: 원본 데이터에 여러 단계에 걸쳐 가우시안 노이즈를 더해 마지막에는 거의 순수한 노이즈로 만든다.",
+        "학습: 신경망이 각 단계에서 섞인 노이즈를 예측하도록 훈련한다(DDPM에서는 노이즈 예측 손실을 쓴다).",
+        "역방향 생성: 무작위 노이즈에서 시작해 학습된 신경망으로 노이즈를 한 단계씩 제거하며 샘플을 만든다.",
+        "조건부 생성: 텍스트 같은 조건을 신경망에 넣어, 프롬프트에 맞는 결과가 나오도록 유도한다.",
+        "속도 개선: 샘플링 단계 수를 줄이는 증류(distillation) 등으로 적은 단계에서도 생성하도록 가속한다.",
+        "최근에는 확산 모델과 flow matching(rectified flow) 방식이 함께 쓰이며, 대표 모델도 두 방식이 섞여 있다."
+      ],
+      "keyTerms": [
+        {
+          "term": "정방향(forward) 과정",
+          "meaning": "데이터에 노이즈를 단계적으로 더하는 과정"
+        },
+        {
+          "term": "역방향(reverse) 과정",
+          "meaning": "노이즈를 제거하며 데이터를 복원하는, 학습 대상이 되는 과정"
+        },
+        {
+          "term": "DDPM",
+          "meaning": "Ho 등(2020)이 제시한, 고품질 이미지 합성을 보인 확산 확률 모델"
+        },
+        {
+          "term": "노이즈 스케줄",
+          "meaning": "각 단계에서 노이즈를 얼마나 더할지 정하는 규칙"
+        },
+        {
+          "term": "샘플링 단계 수",
+          "meaning": "생성 시 노이즈를 걷어내는 반복 횟수. 많을수록 대체로 느리다."
+        },
+        {
+          "term": "증류(distillation)",
+          "meaning": "많은 단계가 필요한 모델을 적은 단계로 생성하는 학생 모델로 압축하는 기법"
+        },
+        {
+          "term": "flow matching / rectified flow",
+          "meaning": "노이즈에서 데이터로 가는 경로(흐름)를 직접 학습하는 관련 방식"
+        },
+        {
+          "term": "FID",
+          "meaning": "생성 이미지 품질을 실제 이미지 분포와 비교해 재는 대표 지표. 낮을수록 좋다."
+        }
+      ],
+      "history": [
+        {
+          "when": "2015",
+          "event": "Sohl-Dickstein 등이 비평형 열역학에서 착안해, 데이터 구조를 서서히 파괴하는 정방향 확산과 이를 복원하는 역방향 과정으로 생성 모델을 만드는 방법을 제안했다.",
+          "sourceIds": [
+            "S1"
+          ]
+        },
+        {
+          "when": "2020",
+          "event": "Ho, Jain, Abbeel이 DDPM으로 확산 확률 모델의 고품질 이미지 합성 결과를 보고했다.",
+          "sourceIds": [
+            "S2"
+          ]
+        }
+      ],
+      "canDo": [
+        "이미지 생성(텍스트 → 이미지)",
+        "이미지·영상 합성 및 편집",
+        "오디오·음성 등 다른 모달리티 생성(서베이에서 언급)",
+        "단백질·소재 합성, 날씨 예측, 편미분방정식 대리 모델 등 과학 분야 응용(arXiv 2402.04384 도입부에서 언급)",
+        "적대적 공격에 대한 입력 정화(DDPM 기반 방어 연구 사례)",
+        "사전학습된 모델에 LoRA 어댑터를 붙여 새 능력(예: 이미지→텍스트)을 추가하는 시도(FullFlow)"
+      ],
+      "hardYet": [
+        "샘플링에 여러 번의 신경망 계산이 필요해 느리다. 이를 줄이는 증류가 활발히 연구된다.",
+        "클래스 조건 생성에서 잘 되던 증류가 자유 형식 텍스트 프롬프트로는 효과가 불분명해, 별도 연구가 필요하다.",
+        "텍스트처럼 이산적인 데이터는 연속 이미지 확산을 그대로 쓰기 어렵다(FullFlow는 별도의 이산 삽입 과정을 추가).",
+        "DDPM의 이론적 수렴 분석이 아직 연구 중이다."
+      ],
+      "recentResearch": [
+        {
+          "title": "Few-Step Distillation for Text-to-Image Generation: A Practical Guide",
+          "authors": "확인하지 못함(제출자: Yifan Pu)",
+          "date": "2025-12",
+          "venue": "arXiv (cs.CV)",
+          "kind": "preprint",
+          "contribution": "텍스트-이미지 교사 모델 FLUX.1-lite에 최신 증류 기법들을 통일된 틀로 적용·비교하고, 입력 스케일링·구조·하이퍼파라미터 지침과 오픈소스 구현 및 학생 모델을 제공했다.",
+          "limitation": "프리프린트이며 FLUX.1-lite 한 교사 모델 중심의 비교다. 이 보고서에서는 초록만 확인했고 본문 수치는 읽지 않았다.",
+          "sourceId": "S3"
+        },
+        {
+          "title": "FullFlow: Upgrading Text-to-Image Flow Matching Models for Bidirectional Vision–Language Generation",
+          "authors": "확인하지 못함(제출자: Eric Tillmann Bill)",
+          "date": "2026-05",
+          "venue": "arXiv (cs.CV, cs.AI)",
+          "kind": "preprint",
+          "contribution": "사전학습된 rectified-flow 텍스트-이미지 모델에 LoRA 어댑터와 가벼운 텍스트 헤드만 학습해 양방향(텍스트↔이미지) 생성기로 바꾸는 방법. 저자들은 SD3에서 text→image FID를 62.7에서 31.6으로 낮췄다고 보고했다.",
+          "limitation": "프리프린트이며 수치는 저자 보고값이다. 비교 대상은 LoRA로 맞춘 Dual Diffusion 방식이며, 독립 재현은 확인하지 못했다.",
+          "sourceId": "S4"
+        }
+      ],
+      "recentResearchNote": "지난 12개월(2025-11~2026-11) 논문 2편만 초록 수준으로 확인했다. 두 편 모두 프리프린트이고 저자 전체 목록은 확인하지 못했다.",
+      "experiment": "Python이 설치된 PC에서 Hugging Face diffusers의 사전학습 확산 파이프라인(예: 소형 이미지 생성 모델)을 불러와 같은 프롬프트·시드로 num_inference_steps를 50, 20, 8로 바꿔 세 장을 생성하고 화질과 소요 시간을 비교한다. GPU가 없으면 CPU에서 해상도를 낮춰 실행한다. (diffusers 사용법은 이번 조사에서 확인한 자료가 아니므로 공식 문서로 먼저 확인할 것)",
+      "searchScope": "arXiv 중심으로 검색. 기원·핵심 논문은 연도 제한 없이, 최근 연구는 2025-11~2026-11을 우선 확인했다. 한국어 자료와 학술지 심사 여부는 확인하지 않았다.",
+      "sources": [
+        {
+          "id": "S1",
+          "title": "Deep Unsupervised Learning using Nonequilibrium Thermodynamics (arXiv:1503.03585)",
+          "url": "https://arxiv.org/abs/1503.03585",
+          "publishedAt": "2015-03"
+        },
+        {
+          "id": "S2",
+          "title": "Denoising Diffusion Probabilistic Models (arXiv:2006.11239)",
+          "url": "https://arxiv.org/abs/2006.11239",
+          "publishedAt": "2020-06"
+        },
+        {
+          "id": "S3",
+          "title": "Few-Step Distillation for Text-to-Image Generation: A Practical Guide (arXiv:2512.13006)",
+          "url": "https://arxiv.org/abs/2512.13006",
+          "publishedAt": "2025-12-15"
+        },
+        {
+          "id": "S4",
+          "title": "FullFlow: Upgrading Text-to-Image Flow Matching Models for Bidirectional Vision–Language Generation (arXiv:2605.20316)",
+          "url": "https://arxiv.org/abs/2605.20316",
+          "publishedAt": "2026-05-19"
+        },
+        {
+          "id": "S5",
+          "title": "Denoising Diffusion Probabilistic Models (arXiv HTML v2)",
+          "url": "https://arxiv.org/html/2006.11239v2",
+          "publishedAt": null
+        }
+      ],
+      "highlights": [
+        "확산 모델은 노이즈를 더하는 과정을 거꾸로 학습해 데이터를 생성하며, 뿌리는 2015년 비평형 열역학 기반 제안이다.",
+        "2020년 DDPM이 고품질 이미지 합성을 보여 주었다.",
+        "최근 연구는 적은 단계로 생성하는 증류와 flow matching 기반 모델의 확장에 쏠려 있다."
+      ],
+      "nextAction": "DDPM 원 논문(arXiv 2006.11239)의 학습·샘플링 알고리즘 부분을 읽고 위 실험을 실행해 본다."
+    },
+    "verify": {
+      "sources": [
+        {
+          "id": "S1",
+          "title": "Deep Unsupervised Learning using Nonequilibrium Thermodynamics (arXiv:1503.03585)",
+          "url": "https://arxiv.org/abs/1503.03585",
+          "publishedAt": "2015-03",
+          "accessedAt": "2026-11-14T07:04:32.903Z",
+          "reachable": true,
+          "httpStatus": 206
+        },
+        {
+          "id": "S2",
+          "title": "Denoising Diffusion Probabilistic Models (arXiv:2006.11239)",
+          "url": "https://arxiv.org/abs/2006.11239",
+          "publishedAt": "2020-06",
+          "accessedAt": "2026-11-14T07:04:32.903Z",
+          "reachable": true,
+          "httpStatus": 206
+        },
+        {
+          "id": "S3",
+          "title": "Few-Step Distillation for Text-to-Image Generation: A Practical Guide (arXiv:2512.13006)",
+          "url": "https://arxiv.org/abs/2512.13006",
+          "publishedAt": "2025-12-15",
+          "accessedAt": "2026-11-14T07:04:32.903Z",
+          "reachable": true,
+          "httpStatus": 206
+        },
+        {
+          "id": "S4",
+          "title": "FullFlow: Upgrading Text-to-Image Flow Matching Models for Bidirectional Vision–Language Generation (arXiv:2605.20316)",
+          "url": "https://arxiv.org/abs/2605.20316",
+          "publishedAt": "2026-05-19",
+          "accessedAt": "2026-11-14T07:04:32.903Z",
+          "reachable": true,
+          "httpStatus": 206
+        },
+        {
+          "id": "S5",
+          "title": "Denoising Diffusion Probabilistic Models (arXiv HTML v2)",
+          "url": "https://arxiv.org/html/2006.11239v2",
+          "publishedAt": null,
+          "accessedAt": "2026-11-14T07:04:32.903Z",
+          "reachable": true,
+          "httpStatus": 206
+        }
+      ],
+      "notes": [
+        "출처 5개 중 5개가 접속 시 응답했습니다(코드 확인)."
+      ]
+    },
+    "store_artifact": {
+      "artifactId": "a_829c786eebb528e7"
+    },
+    "render_video": {
+      "ok": true,
+      "videoId": "a_d8b8271dd1dd0b4b"
+    },
+    "sync_notion": {
+      "status": "synced",
+      "note": "Notion 날짜별 페이지에 기록했습니다.",
+      "url": ""
+    }
+  },
+  "question": null,
+  "result": {
+    "jobId": "j_efb89e3a34396869",
+    "workflow": "concept_video",
+    "status": "completed",
+    "title": "확산 모델(Diffusion Model) — 영상",
+    "highlights": [
+      "확산 모델은 노이즈를 더하는 과정을 거꾸로 학습해 데이터를 생성하며, 뿌리는 2015년 비평형 열역학 기반 제안이다.",
+      "2020년 DDPM이 고품질 이미지 합성을 보여 주었다.",
+      "최근 연구는 적은 단계로 생성하는 증류와 flow matching 기반 모델의 확장에 쏠려 있다."
+    ],
+    "artifactType": "video_file",
+    "notionSyncStatus": "synced",
+    "assumptions": [
+      "머신러닝의 생성 모델인 확산 모델(DDPM 계열). 메모에 영문 'Diffusion Model'이 병기되어 있어 이 해석을 골랐다."
+    ],
+    "coverageNotes": [
+      "출처 5개 중 5개가 접속 시 응답했습니다(코드 확인).",
+      "검색 범위: arXiv 중심으로 검색. 기원·핵심 논문은 연도 제한 없이, 최근 연구는 2025-11~2026-11을 우선 확인했다. 한국어 자료와 학술지 심사 여부는 확인하지 않았다.",
+      "영상: 장면 8개 · 약 61초 · 내레이션·음악 없는 자막형 영상(HyperFrames 로컬 렌더).",
+      "Notion 날짜별 페이지에 기록했습니다."
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Deep Unsupervised Learning using Nonequilibrium Thermodynamics (arXiv:1503.03585)",
+        "url": "https://arxiv.org/abs/1503.03585",
+        "publishedAt": "2015-03",
+        "accessedAt": "2026-11-14T07:04:32.903Z",
+        "reachable": true,
+        "httpStatus": 206
+      },
+      {
+        "id": "S2",
+        "title": "Denoising Diffusion Probabilistic Models (arXiv:2006.11239)",
+        "url": "https://arxiv.org/abs/2006.11239",
+        "publishedAt": "2020-06",
+        "accessedAt": "2026-11-14T07:04:32.903Z",
+        "reachable": true,
+        "httpStatus": 206
+      },
+      {
+        "id": "S3",
+        "title": "Few-Step Distillation for Text-to-Image Generation: A Practical Guide (arXiv:2512.13006)",
+        "url": "https://arxiv.org/abs/2512.13006",
+        "publishedAt": "2025-12-15",
+        "accessedAt": "2026-11-14T07:04:32.903Z",
+        "reachable": true,
+        "httpStatus": 206
+      },
+      {
+        "id": "S4",
+        "title": "FullFlow: Upgrading Text-to-Image Flow Matching Models for Bidirectional Vision–Language Generation (arXiv:2605.20316)",
+        "url": "https://arxiv.org/abs/2605.20316",
+        "publishedAt": "2026-05-19",
+        "accessedAt": "2026-11-14T07:04:32.903Z",
+        "reachable": true,
+        "httpStatus": 206
+      },
+      {
+        "id": "S5",
+        "title": "Denoising Diffusion Probabilistic Models (arXiv HTML v2)",
+        "url": "https://arxiv.org/html/2006.11239v2",
+        "publishedAt": null,
+        "accessedAt": "2026-11-14T07:04:32.903Z",
+        "reachable": true,
+        "httpStatus": 206
+      }
+    ],
+    "errors": [],
+    "engine": "kiro-cli",
+    "nextAction": "DDPM 원 논문(arXiv 2006.11239)의 학습·샘플링 알고리즘 부분을 읽고 위 실험을 실행해 본다.",
+    "artifactId": "a_829c786eebb528e7",
+    "artifactUrl": "/r/a_829c786eebb528e7",
+    "downloadUrl": "/r/a_829c786eebb528e7?download=1",
+    "videoId": "a_d8b8271dd1dd0b4b",
+    "videoUrl": "/v/a_d8b8271dd1dd0b4b",
+    "videoDownloadUrl": "/v/a_d8b8271dd1dd0b4b?download=1",
+    "videoSeconds": 61
+  },
+  "history": [
+    {
+      "at": "2026-11-14T07:03:25.576Z",
+      "event": "담고 바로 맡김"
+    },
+    {
+      "at": "2026-11-14T07:03:42.344Z",
+      "event": "실행 시작(시도 1)"
+    },
+    {
+      "at": "2026-11-14T07:08:55.585Z",
+      "event": "completed (completed)"
+    }
+  ],
+  "createdAt": "2026-11-14T07:03:25.576Z",
+  "updatedAt": "2026-11-14T07:08:55.585Z",
+  "completedAt": "2026-11-14T07:08:55.585Z"
+}

@@ -63,8 +63,11 @@ export function listConnections(env: Record<string, string | undefined> = proces
     {
       id: "video",
       label: "영상 렌더 HyperFrames",
-      state: hyperframesInstalled() ? "connected" : "not_configured",
-      detail: hyperframesInstalled()
+      // 서버리스(공개 시연판)에는 워커가 없어 렌더하지 않는다. 패키지가 번들에 있어도 연결됨으로 표시하지 않는다
+      state: env.VERCEL ? "unsupported" : hyperframesInstalled() ? "connected" : "not_configured",
+      detail: env.VERCEL
+        ? "공개 시연판에는 워커가 없어 영상을 만들지 않습니다. 보이는 영상은 개발자 PC에서 렌더한 결과입니다."
+        : hyperframesInstalled()
         ? "로컬에서 MP4를 만듭니다(계정·API 키 불필요, 내레이션·음악 없음). 첫 렌더는 폰트·GSAP를 내려받느라 인터넷이 필요합니다."
         : "hyperframes 패키지가 없습니다 — npm install 후 사용할 수 있습니다.",
     },

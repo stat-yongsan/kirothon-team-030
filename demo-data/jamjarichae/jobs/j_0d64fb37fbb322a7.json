@@ -1,0 +1,125 @@
+{
+  "id": "j_0d64fb37fbb322a7",
+  "userId": "owner",
+  "workflow": "idea_prototype",
+  "status": "completed",
+  "stage": null,
+  "input": {
+    "text": "팀 회식 날짜 정하기 투표",
+    "url": null,
+    "image": null
+  },
+  "sample": false,
+  "capturedAt": "2026-11-14T07:03:32.158Z",
+  "captureDate": "2026-11-14",
+  "timeZone": "Asia/Seoul",
+  "runAt": null,
+  "attempts": 1,
+  "leaseUntil": null,
+  "workerId": "w_ebd64ce4",
+  "idempotencyKey": "dbba8c4a-b9f2-4bec-883c-89a955f8747f",
+  "steps": {
+    "ingest": {
+      "status": "done",
+      "at": "2026-11-14T07:09:31.185Z"
+    },
+    "generate": {
+      "status": "done",
+      "at": "2026-11-14T07:09:56.330Z"
+    },
+    "store_artifact": {
+      "status": "done",
+      "at": "2026-11-14T07:09:56.354Z"
+    },
+    "sync_notion": {
+      "status": "done",
+      "at": "2026-11-14T07:09:57.724Z"
+    }
+  },
+  "checkpoint": {
+    "ingest": {
+      "fetched": null,
+      "notes": []
+    },
+    "generate": {
+      "proto": {
+        "interpretation": "팀 회식 후보 날짜를 올려 두고 팀원이 가능한 날짜에 투표해, 가장 많은 표를 받은 날짜를 보여 주는 투표 페이지로 해석했다. 사용자가 이 해석을 고른 것은 아니다.",
+        "targetUser": "회식 날짜를 조율하는 팀장 또는 총무와 팀원",
+        "problem": "메신저로 날짜를 물으면 답이 흩어져서 가능한 인원이 가장 많은 날짜를 한눈에 찾기 어렵다.",
+        "coreAction": "팀원을 고르고 가능한 날짜를 체크하면 날짜별 득표와 추천 날짜가 바로 바뀐다.",
+        "title": "회식 날짜 투표",
+        "html": "<!doctype html><html lang=\"ko\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>회식 날짜 투표</title><style>*{box-sizing:border-box}body{margin:0;font-family:sans-serif;background:#10162b;color:#eef;line-height:1.5}main{max-width:480px;margin:0 auto;padding:16px}h1{font-size:22px;margin:8px 0}h2{font-size:16px;margin:0 0 8px}.note{font-size:12px;color:#aab;background:#1b2340;padding:8px;border-radius:8px}.card{background:#1b2340;border-radius:12px;padding:12px;margin:12px 0}.row{display:flex;flex-wrap:wrap;gap:6px}button{font:inherit;border:1px solid #4a5a99;background:#232d55;color:#eef;border-radius:8px;padding:8px 10px;cursor:pointer}button.on{background:#ffd54a;color:#222;border-color:#ffd54a}.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:14px}.bar span.l{width:78px;flex:none}.track{flex:1;background:#10162b;border-radius:6px;height:16px;overflow:hidden;min-width:0}.fill{height:100%;background:#6c8cff;width:0;transition:width .3s}.fill.top{background:#ffd54a}.n{width:48px;text-align:right;flex:none}#best{font-size:16px;font-weight:bold;color:#ffd54a;word-break:keep-all}#who{font-size:13px;color:#aab;margin-top:6px;word-break:keep-all}</style></head><body><main><h1>🌙 회식 날짜 투표</h1><p class=\"note\">이 페이지의 이름과 날짜는 모두 가상 샘플입니다. 저장되지 않으며 새로고침하면 처음 상태로 돌아갑니다.</p><div class=\"card\"><h2>1. 투표할 사람 고르기</h2><div class=\"row\" id=\"people\"></div></div><div class=\"card\"><h2>2. 가능한 날짜 누르기 (<span id=\"cur\"></span>)</h2><div class=\"row\" id=\"dates\"></div><div class=\"row\" style=\"margin-top:8px\"><button id=\"clear\">이 사람 선택 모두 지우기</button><button id=\"reset\">전체 초기화</button></div></div><div class=\"card\"><h2>3. 현재 결과</h2><div id=\"bars\"></div><p id=\"best\"></p><p id=\"who\"></p></div></main><script>var P=['민지','준호','서연','도윤','하늘'];var D=['6/12(목)','6/13(금)','6/19(목)','6/20(금)','6/26(목)'];var INIT={'민지':[1,3],'준호':[1,2],'서연':[3,4],'도윤':[1,3],'하늘':[]};var votes,cur=0;function init(){votes={};P.forEach(function(p){votes[p]=INIT[p].slice()});}init();var pe=document.getElementById('people'),de=document.getElementById('dates'),be=document.getElementById('bars');function draw(){pe.innerHTML='';P.forEach(function(p,i){var b=document.createElement('button');b.textContent=p+' ('+votes[p].length+')';if(i===cur)b.className='on';b.onclick=function(){cur=i;draw()};pe.appendChild(b)});document.getElementById('cur').textContent=P[cur]+' 님';de.innerHTML='';D.forEach(function(d,j){var b=document.createElement('button');var on=votes[P[cur]].indexOf(j)>=0;b.textContent=(on?'✔ ':'')+d;if(on)b.className='on';b.onclick=function(){var a=votes[P[cur]],k=a.indexOf(j);if(k>=0)a.splice(k,1);else a.push(j);draw()};de.appendChild(b)});var c=D.map(function(_,j){return P.filter(function(p){return votes[p].indexOf(j)>=0})});var m=Math.max.apply(null,c.map(function(x){return x.length}));be.innerHTML='';D.forEach(function(d,j){var r=document.createElement('div');r.className='bar';var pct=P.length?c[j].length/P.length*100:0;r.innerHTML='<span class=\"l\">'+d+'</span><div class=\"track\"><div class=\"fill'+(m>0&&c[j].length===m?' top':'')+'\" style=\"width:'+pct+'%\"></div></div><span class=\"n\">'+c[j].length+'/'+P.length+'</span>';be.appendChild(r)});var bs=document.getElementById('best'),w=document.getElementById('who');if(m===0){bs.textContent='아직 투표가 없습니다.';w.textContent='';return}var tops=[];D.forEach(function(d,j){if(c[j].length===m)tops.push(j)});bs.textContent=(tops.length>1?'공동 1위: ':'추천 날짜: ')+tops.map(function(j){return D[j]}).join(', ')+' ('+m+'명 가능)';var j0=tops[0];var no=P.filter(function(p){return votes[p].indexOf(j0)<0});w.textContent=no.length?(D[j0]+' 불참 가능: '+no.join(', ')):(D[j0]+' 전원 가능')}document.getElementById('clear').onclick=function(){votes[P[cur]]=[];draw()};document.getElementById('reset').onclick=function(){init();draw()};draw();</script></body></html>",
+        "howToTry": [
+          "‘하늘’을 눌러 투표할 사람으로 고른다.",
+          "6/19(목)과 6/13(금)을 눌러 가능한 날짜로 체크한다.",
+          "아래 막대와 추천 날짜가 어떻게 바뀌는지 본다.",
+          "다른 사람으로 바꿔 체크를 해제하거나 ‘전체 초기화’로 처음 상태로 돌린다."
+        ],
+        "highlights": [
+          "사람별로 가능한 날짜를 체크하면 날짜별 득표 막대가 즉시 갱신된다.",
+          "1위 날짜를 강조하고 동률이면 공동 1위로 표시하며 불참 가능자를 알려 준다.",
+          "모든 데이터는 가상 샘플이며 외부 통신과 저장 없이 동작한다."
+        ],
+        "nextAction": "실제 팀원 이름과 후보 날짜를 입력해 보는 기능이 필요한지 정한다."
+      },
+      "problems": []
+    },
+    "store_artifact": {
+      "artifactId": "a_716465a079ac68d5"
+    },
+    "sync_notion": {
+      "status": "synced",
+      "note": "Notion 날짜별 페이지에 기록했습니다.",
+      "url": ""
+    }
+  },
+  "question": null,
+  "result": {
+    "jobId": "j_0d64fb37fbb322a7",
+    "workflow": "idea_prototype",
+    "status": "completed",
+    "title": "회식 날짜 투표",
+    "highlights": [
+      "사람별로 가능한 날짜를 체크하면 날짜별 득표 막대가 즉시 갱신된다.",
+      "1위 날짜를 강조하고 동률이면 공동 1위로 표시하며 불참 가능자를 알려 준다.",
+      "모든 데이터는 가상 샘플이며 외부 통신과 저장 없이 동작한다."
+    ],
+    "artifactType": "web_prototype",
+    "notionSyncStatus": "synced",
+    "assumptions": [
+      "팀 회식 후보 날짜를 올려 두고 팀원이 가능한 날짜에 투표해, 가장 많은 표를 받은 날짜를 보여 주는 투표 페이지로 해석했다. 사용자가 이 해석을 고른 것은 아니다."
+    ],
+    "coverageNotes": [
+      "핵심 행동: 팀원을 고르고 가능한 날짜를 체크하면 날짜별 득표와 추천 날짜가 바로 바뀐다.",
+      "눌러 볼 순서: ‘하늘’을 눌러 투표할 사람으로 고른다. → 6/19(목)과 6/13(금)을 눌러 가능한 날짜로 체크한다. → 아래 막대와 추천 날짜가 어떻게 바뀌는지 본다. → 다른 사람으로 바꿔 체크를 해제하거나 ‘전체 초기화’로 처음 상태로 돌린다.",
+      "코드 정적 검사 통과: 스크립트·입력 요소 있음, 외부 리소스·네트워크·저장소·상위 창 접근 없음.",
+      "버튼 동작은 자동 클릭 검사를 하지 않았습니다. 열어서 직접 확인하세요.",
+      "격리: sandbox iframe(allow-scripts만) + CSP default-src 'none'.",
+      "Notion 날짜별 페이지에 기록했습니다."
+    ],
+    "sources": [],
+    "errors": [],
+    "engine": "kiro-cli",
+    "nextAction": "실제 팀원 이름과 후보 날짜를 입력해 보는 기능이 필요한지 정한다.",
+    "artifactId": "a_716465a079ac68d5",
+    "artifactUrl": "/p/a_716465a079ac68d5",
+    "downloadUrl": "/p/a_716465a079ac68d5/raw?download=1"
+  },
+  "history": [
+    {
+      "at": "2026-11-14T07:03:32.158Z",
+      "event": "담고 바로 맡김"
+    },
+    {
+      "at": "2026-11-14T07:09:31.120Z",
+      "event": "실행 시작(시도 1)"
+    },
+    {
+      "at": "2026-11-14T07:09:57.732Z",
+      "event": "completed (completed)"
+    }
+  ],
+  "createdAt": "2026-11-14T07:03:32.158Z",
+  "updatedAt": "2026-11-14T07:09:57.732Z",
+  "completedAt": "2026-11-14T07:09:57.732Z"
+}

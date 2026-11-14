@@ -102,6 +102,11 @@ W5 유튜브 결과는 설계대로 `partial`이다. 요약 근거는 자막뿐�
 - 증상: W5 오류 2건은 엔진을 부르지 않았는데 결과의 `engine`이 `kiro-cli`였다.
 - 수정: 입력 수집 단계에서 실패하면 `engine: code`(화면 배지 "코드"). 테스트 2곳에 확인 추가.
 
+### 3.8 `npm.cmd run worker`가 `.env.local`을 읽지 않음 (16:01 발견, 16:14 수정)
+
+- 증상: Next 서버는 `.env.local`을 읽어 연결 상태에 "토큰 설정됨"을 보이지만, 워커는 `node`로 직접 실행돼 `NOTION_TOKEN`·`GOOGLE_CALENDAR_*`가 없다. 이 상태로 맡기면 Notion `not_configured`, Calendar "연결 없음"으로 끝난다(화면과 워커 판정 불일치).
+- 수정: `package.json` `worker` 스크립트에 `--env-file-if-exists=.env.local`(Node 22.19, 파일이 없어도 계속 실행). `quality.mjs task` PASS(16:14).
+
 ## 4. 재시작 복구 실증 (R2.3, R2.4)
 
 `j_ffefff1abb396176` 기록(UTC):
@@ -125,3 +130,10 @@ W5 유튜브 결과는 설계대로 `partial`이다. 요약 근거는 자막뿐�
 - W6 실제 Calendar 등록: Calendar 미구성이라 하지 않았다. 질문 → 답변 → 재개 경로는 14:28–14:40에 실제로 확인했다(2절).
 - Notion 기록, Google 로그인: 연결 정보 없음.
 - 생성된 체험 페이지의 버튼 자동 클릭 검사: 워커는 하지 않는다. 위 표의 W4 1건만 사람이 브라우저에서 눌러 확인했다.
+
+## 7. Vercel 공개 시연판 (16:25–16:42)
+
+- 주소: https://jamjarichae.vercel.app (프로젝트 `jamjarichae`, `npx vercel@50 deploy --prod`, 런타임 환경변수 `JAMJARI_DATA_DIR=demo-data/jamjarichae`만 설정. Notion·Google 비밀값은 올리지 않음)
+- 동작: `http.ts` guard가 Vercel에서 쓰기만 503 `public_demo`로 거부하고 읽기는 허용. `demo-data/jamjarichae`에 16:02–16:13 실제 실행 결과 7건(사진 실패 건 제외)과 결과물 8개(HTML 7·MP4 1, 4.2MB)를 넣었다. W6 일정 링크(계정 이메일 포함)·Notion 링크는 스냅샷에서 지웠다. 메인 화면 상단에 "공개 시연판 · 결과 보기 전용" 안내, 연결 상태의 영상 렌더는 Vercel에서 `unsupported`.
+- 업로드 제외: `.vercelignore` 허용 목록(`src`, `demo-data`, 설정 파일만). 첫 시도는 루트 설치 파일(.exe)까지 599.5MB가 올라가 "File size limit exceeded"로 배포 실패(배포 생성 전 중단), 두 번째는 프레임워크 미지정으로 실패 → `vercel.json` `framework: nextjs`로 해결.
+- 확인(로그인 없이, 16:38–16:42): 메인·`/api/jamjari/jobs`(작업 7개)·결과 HTML 6개·W4 체험·`/v/…` MP4 모두 200. 브라우저에서 담기 → "공개 시연판은 결과 보기 전용" 오류 표시, 영상 재생(61초·1920px), W4 버튼 클릭 시 6/19 득표 1/5→2/5.
