@@ -1,6 +1,7 @@
 # 근거 대응표 — 요구 → 코드 → 테스트 → 시연
 
 > 기록 2026-11-14 13:34 KST. 요구 번호는 `.kiro/specs/jamjarichae/requirements.md`. 테스트는 `npm.cmd run test`(Vitest), 시연 시각은 `docs/DEMO.md`.
+> 아래 대응표와 검사 기록은 14:48까지의 기록이다. 이후 W2 영상 생성, Calendar·Notion 실연동과 화면 개편은 [실행 기록](integration-status.md) 6·8절을 참고한다.
 > "실측"은 이 PC에서 실제로 실행해 확인한 것, "테스트만"은 자동 테스트로만 확인한 것, "미검증"은 확인하지 않은 것이다.
 
 ## 1. 대응표

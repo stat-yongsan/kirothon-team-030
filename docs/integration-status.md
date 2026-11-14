@@ -169,3 +169,8 @@ W5 유튜브 결과는 설계대로 `partial`이다. 요약 근거는 자막뿐�
 - 연결 상태: 설정 유무만 보던 표시를 실제 호출로 바꿨다(60초 캐시). Calendar는 refresh token으로 access token을 갱신하고 기본 캘린더 이벤트를 조회, Notion은 루트 페이지를 조회한다. 17:13 워커·kiro-cli·Calendar·Notion·HyperFrames 5개 모두 `connected`. 별도로 확인: Notion 연동 앱 `jamjarichae` 토큰 유효·루트 페이지 접근 가능, Calendar 토큰 갱신(`calendar.events`)·조회 성공, 실제 일정 작업 3건 completed(일정 생성·Notion 기록).
 - Google 로그인(JWT)·사용자별 Notion/Calendar 연결은 구현하지 않았다. 시작했다가 사용자 지시로 중단하고 코드를 되돌렸으며 연결 상태 목록에서 "Google 로그인" 항목은 뺐다. 지금은 이 PC의 소유자 1명 모드다. 환경변수 기반 Notion·Calendar는 소유자 1명용이다.
 - 검사: lint 오류 0(테스트의 `any` 2건은 사유 주석 후 허용, 미사용 prop 제거), 타입 검사·테스트 138개 통과. 브라우저(Edge)로 새 화면 흐름은 확인하지 못했다.
+
+## 9. 제출 문서 재점검 (17:48 이후)
+
+- `node scripts/quality.mjs release --force`: PASS. lint·typegen·typecheck·test·build 모두 통과. 이 검사는 화면 브라우저 검증을 포함하지 않는다.
+- BUILD_REPORT의 작업·테스트 수와 Calendar·Notion·영상 연동 상태를 기존 실행 기록에 맞춰 갱신했다. 과거 근거 대응표는 기록 시점을 명시했다.
