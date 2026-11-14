@@ -2,7 +2,7 @@
 
 낮에 떠오른 생각·링크·사진을 저장만 하고 다시 정리하지 못하는 사람을 위한 앱입니다. 밤에 던져 두면 자는 동안 Kiro가 조사·정리하고, 아침에 HTML 보고서·영상·체험 URL·Google Calendar 일정으로 돌려주며 Notion에 날짜별로 기록합니다.
 
-**Demo:** [https://jamjarichae.vercel.app](https://jamjarichae.vercel.app)(결과 보기 전용) · 시연 순서와 화면별 주소는 [docs/DEMO.md](docs/DEMO.md)
+**Demo:** [https://jamjarichae.vercel.app](http://localhost:3000/)(결과 보기 전용) · 시연 순서와 화면별 주소는 [docs/DEMO.md](docs/DEMO.md)
 
 **공개 시연판:** 2026-11-14 16:02–16:13에 개발자 PC에서 kiro-cli로 실제 실행한 6경로 결과(W1 개념 HTML·W2 영상 MP4·W3 아이디어 5개·W4 체험 페이지·W5 유튜브 요약·W6 일정)를 보는 **결과 보기 전용**입니다. 작업 큐·워커·kiro-cli가 로컬 PC에 있어 이 주소에서 담기·맡기기는 거부됩니다(503 `public_demo`). 전체 흐름은 6절대로 로컬에서 실행합니다.
 
