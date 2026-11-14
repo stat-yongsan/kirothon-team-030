@@ -11,6 +11,7 @@
 - 문제 원문과 확정/제안 구분: [challenge.completed.md](challenge.completed.md)
 - 활성 Spec: [.kiro/specs/jamjarichae/](.kiro/specs/jamjarichae/) (requirements → design → tasks, 작업 10개 완료)
 - Kiro 활용 기록: [BUILD_REPORT.md](BUILD_REPORT.md) · 요구→코드→테스트→실측 대응표: [docs/evidence.md](docs/evidence.md) · 실제 실행 기록: [docs/integration-status.md](docs/integration-status.md) · 외부 스킬 적용: [docs/skill-adapters.md](docs/skill-adapters.md)
+- 발표자료: [PRESENTATION.pdf](PRESENTATION.pdf) · 편집 가능한 [HTML 발표자료](PRESENTATION.html) (axis:ppt3, [라이선스](docs/axis-ppt3-LICENSE.txt))
 
 ---
 
