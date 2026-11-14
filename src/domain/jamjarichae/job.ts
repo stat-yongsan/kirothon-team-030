@@ -84,11 +84,19 @@ export interface Job {
   /** 단계별 중간 산출물. 재시작 시 여기서 이어간다(AC-03) */
   checkpoint: Record<string, unknown>;
   question: { text: string; answer: string | null } | null;
+  /** 지금까지 받은 질문·답변(최근 5개). 질문이 여러 번 이어져도 앞선 답이 사라지지 않게 한다 */
+  answers?: { question: string; answer: string }[];
   result: Result | null;
   history: { at: string; event: string }[];
   createdAt: string;
   updatedAt: string;
   completedAt: string | null;
+}
+
+/** 생성 엔진과 코드 판정에 넘길 답변 묶음. 답이 없으면 null */
+export function answersText(job: Pick<Job, "answers" | "question">): string | null {
+  if (job.answers?.length) return job.answers.map((a) => `질문: ${a.question}\n답: ${a.answer}`).join("\n\n");
+  return job.question?.answer ?? null;
 }
 
 /** 화면에 내려보낼 공개 형태(체크포인트 원문·내부 필드 제외) */

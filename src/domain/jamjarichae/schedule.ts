@@ -98,6 +98,23 @@ const key = (c: ScheduleCandidate) => `${c.date}|${c.startTime}|${c.endTime}`;
  * 시간대 미기재는 사용자 시간대로, 종료 시각 미기재는 1시간으로 가정하고 가정을 표시한다.
  * 신청 마감(deadline)은 행사일과 구분해 메모로만 남기고 등록하지 않는다(AC-12).
  */
+/**
+ * 모델이 표시한 yearStated를 원문으로 다시 확인한다(코드 판정).
+ * 연도 판정을 모델의 yearStated 표시에만 맡기지 않는다. 연도 숫자(예: 2026)가 원문·사용자 답변 어디에도 없으면 연도 미기재로 본다.
+ */
+export function verifyYearStated(extraction: ScheduleExtraction, sourceTexts: (string | null | undefined)[]): ScheduleExtraction {
+  const source = sourceTexts.filter(Boolean).join("\n");
+  const notes = [...extraction.notes];
+  const candidates = extraction.candidates.map((c) => {
+    if (!c.yearStated || !c.date) return c;
+    const year = c.date.slice(0, 4);
+    if (source.includes(year)) return c;
+    notes.push(`"${c.title}": 원문과 답변에 연도(${year})가 없어 코드가 연도 미기재로 판정했습니다.`);
+    return { ...c, yearStated: false };
+  });
+  return { ...extraction, candidates, notes: notes.slice(0, 10) };
+}
+
 export function decideSchedule(extraction: ScheduleExtraction, userTz: string, now: Date): ScheduleDecision {
   const assumptions: string[] = [];
   const notes: string[] = [...extraction.notes];

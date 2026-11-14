@@ -103,6 +103,7 @@ export function answer(id: string, raw: string, now = new Date()): Job {
   return updateJob(id, (j) => {
     if (j.status !== "needs_input") return false;
     j.question = { text: j.question?.text ?? "", answer: text };
+    j.answers = [...(j.answers ?? []), { question: j.question.text, answer: text }].slice(-5);
     // 입력 수집 이후 단계부터 다시(답이 해석을 바꾸므로)
     const ingest = j.checkpoint.ingest;
     const ingestStep = j.steps.ingest;

@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import { MAX_ATTEMPTS, workflowSpec, type JobStatus, type ResultStatus, type Step } from "../../domain/jamjarichae/contracts.ts";
 import * as F from "../../domain/jamjarichae/fixtures.ts";
-import type { Job, Result, Source } from "../../domain/jamjarichae/job.ts";
+import { answersText, type Job, type Result, type Source } from "../../domain/jamjarichae/job.ts";
 import {
   checkIdeas,
   checkPrototypeHtml,
@@ -17,7 +17,7 @@ import {
   type Summary,
 } from "../../domain/jamjarichae/outputs.ts";
 import { conceptBody, ideaBody, scheduleBody, shell, summaryBody } from "../../domain/jamjarichae/render.ts";
-import { decideSchedule, ScheduleExtractionSchema, type ScheduleDecision, type ScheduleExtraction } from "../../domain/jamjarichae/schedule.ts";
+import { decideSchedule, ScheduleExtractionSchema, verifyYearStated, type ScheduleDecision, type ScheduleExtraction } from "../../domain/jamjarichae/schedule.ts";
 import { captureDate } from "../../domain/jamjarichae/contracts.ts";
 import { notionConfigured } from "./connections.ts";
 import { fetchPublicPage, probeUrl, UrlBlockedError, type FetchedPage } from "./fetch-url.ts";
@@ -232,7 +232,7 @@ function ctxOf(job: Job, ing: Ingest, deps: WorkerDeps): P.PromptContext {
   return {
     input: job.input,
     fetched: ing.fetched,
-    answer: job.question?.answer ?? null,
+    answer: answersText(job),
     today: captureDate(deps.now(), job.timeZone),
     timeZone: job.timeZone,
   };
@@ -452,7 +452,10 @@ async function runSchedule(job: Job, deps: WorkerDeps): Promise<Outcome> {
   const extraction: ScheduleExtraction = await step(job.id, "generate", deps, () =>
     sampleOr(job, F.SAMPLE_SCHEDULE, () => askKiro(job, "generate", P.schedulePrompt(ctxOf(job, ing, deps)), ScheduleExtractionSchema, [], deps)),
   );
-  const decision: ScheduleDecision = await step(job.id, "verify", deps, async () => decideSchedule(extraction, job.timeZone, deps.now()));
+  // 모델의 yearStated를 원문·답변으로 다시 확인한 뒤 판정한다(검증된 원문만 근거, 모델 excerpt는 쓰지 않음)
+  const decision: ScheduleDecision = await step(job.id, "verify", deps, async () =>
+    decideSchedule(verifyYearStated(extraction, [job.input.text, ing.fetched?.text, answersText(job)]), job.timeZone, deps.now()),
+  );
   const result = baseResult(job, decision.event?.title ?? "일정 확인 필요");
   result.assumptions = decision.assumptions;
   result.coverageNotes = [...ing.notes, ...decision.notes];
@@ -523,6 +526,8 @@ export async function processJob(id: string, deps: WorkerDeps): Promise<JobStatu
         return;
       }
       const result = baseResult(j, "처리하지 못했습니다");
+      // 입력 수집 단계에서 멈췄으면 생성 엔진을 부르지 않았다. 화면에 "kiro-cli 실제 생성"으로 보이지 않게 코드 판정으로 표시한다
+      if (se.stage === "ingest" && !j.sample) result.engine = "code";
       result.status = "failed" as ResultStatus;
       result.highlights = [se.message];
       result.nextAction = se.nextAction ?? "입력을 확인하고 다시 맡겨 주세요.";

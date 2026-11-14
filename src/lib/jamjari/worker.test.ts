@@ -2,9 +2,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { SAMPLE_CONCEPT, SAMPLE_IDEAS, SAMPLE_PROTOTYPE, SAMPLE_SCHEDULE } from "../../domain/jamjarichae/fixtures";
+import { SAMPLE_CONCEPT, SAMPLE_IDEAS, SAMPLE_PROTOTYPE, SAMPLE_SCHEDULE, SAMPLE_SUMMARY } from "../../domain/jamjarichae/fixtures";
 import type { KiroRunner, KiroRunOptions } from "./kiro";
-import { capture, type CaptureRequest } from "./service";
+import { answer, capture, type CaptureRequest } from "./service";
 import { claimNext, getJob, readArtifact, updateJob } from "./store";
 import { processJob, type WorkerDeps } from "./worker";
 
@@ -158,7 +158,156 @@ describe("W4 체험 (R3.6)", () => {
   });
 });
 
+describe("W5 요약 (R3.7, R3.8) — 외부 도구는 가짜", () => {
+  const YT_URL = "https://www.youtube.com/watch?v=jNQXAC9IVRw";
+  const META = { id: "jNQXAC9IVRw", title: "Me at the zoo", channel: "jawed", durationSeconds: 19, uploadDate: "2005-04-24" };
+  const SUMMARY = { ...SAMPLE_SUMMARY, title: "동물원 영상 요약", sceneSeconds: [1, 5, 999], highlights: ["코끼리 앞에서 촬영"] };
+
+  function ytDeps(kiro: KiroRunner, over: Partial<WorkerDeps["youtube"]> = {}, captured: number[][] = []): WorkerDeps {
+    return {
+      ...deps(kiro),
+      youtube: {
+        fetchMeta: async () => META,
+        fetchTranscript: async () => ({ lang: "en", lines: ["[0:01] All right, so here we are", "[0:05] in front of the elephants"] }),
+        captureFrames: async (_id, secs, outDir) => {
+          captured.push(secs);
+          fs.mkdirSync(outDir, { recursive: true });
+          return secs.map((s) => {
+            const file = path.join(outDir, `scene-${s}.jpg`);
+            fs.writeFileSync(file, Buffer.from([0xff, 0xd8, 0xff, 0xe0]));
+            return { seconds: s, file };
+          });
+        },
+        ...over,
+      },
+    };
+  }
+
+  it("웹페이지: 본문을 <fetched> 데이터로만 넘기고 도구 신뢰 없음, completed + 출처 1개", async () => {
+    const kiro = fakeKiro([{ ...SAMPLE_SUMMARY, title: "웹 요약" }]);
+    const id = queued({ purpose: "summary", output: "html", url: "https://example.com/article" });
+    expect(await processJob(id, deps(kiro))).toBe("completed");
+    expect(kiro.calls).toHaveLength(1);
+    expect(kiro.calls[0].opts.tools).toEqual([]);
+    expect(kiro.calls[0].prompt).toContain("<fetched>");
+    const r = getJob(id)!.result!;
+    expect(r.engine).toBe("kiro-cli");
+    expect(r.sources).toHaveLength(1);
+    expect(r.sources[0].url).toBe("https://example.com/article");
+    expect(r.coverageNotes.join(" ")).toContain("웹페이지 본문(텍스트)만 근거로");
+  });
+
+  it("웹페이지를 읽지 못하면 엔진을 부르지 않고 재시도 없이 failed(unreadable_url) + 다음 행동", async () => {
+    const kiro = fakeKiro([]);
+    const id = queued({ purpose: "summary", output: "html", url: "https://example.com/login-only" });
+    const d = { ...deps(kiro), fetchPage: async () => Promise.reject(new Error("403")) };
+    expect(await processJob(id, d)).toBe("failed");
+    expect(kiro.calls).toHaveLength(0);
+    const r = getJob(id)!.result!;
+    expect(r.errors[0]).toMatchObject({ code: "unreadable_url", retryable: false });
+    expect(r.engine).toBe("code");
+    expect(r.nextAction).toContain("다른 링크");
+    expect(getJob(id)!.attempts).toBe(1);
+  });
+
+  it("유튜브: 자막으로 요약, 영상 길이 안의 시각만 캡처, 시점 링크 포함, 결과는 partial", async () => {
+    const kiro = fakeKiro([SUMMARY]);
+    const captured: number[][] = [];
+    const id = queued({ purpose: "summary", output: "html", url: YT_URL });
+    expect(await processJob(id, ytDeps(kiro, {}, captured))).toBe("partial");
+    expect(captured).toEqual([[1, 5]]); // 999초는 19초 영상 밖이라 제외
+    expect(kiro.calls[0].opts.tools).toEqual([]);
+    expect(kiro.calls[0].prompt).toContain("in front of the elephants");
+    const r = getJob(id)!.result!;
+    expect(r.status).toBe("partial");
+    expect(r.coverageNotes.join(" ")).toContain("AI가 영상 화면을 직접 보지 않았습니다");
+    expect(r.coverageNotes.join(" ")).toContain("2개 시각의 프레임을 캡처");
+    const html = readArtifact(r.artifactId!, "html")!.toString();
+    expect(html).toContain("t=5s");
+    expect(html).toContain("data:image/jpeg;base64,");
+  });
+
+  it("프레임을 하나도 얻지 못해도 자막 요약은 partial로 남기고 '장면 확인 미완료'를 적는다", async () => {
+    const id = queued({ purpose: "summary", output: "html", url: YT_URL });
+    expect(await processJob(id, ytDeps(fakeKiro([SUMMARY]), { captureFrames: async () => [] }))).toBe("partial");
+    expect(getJob(id)!.result!.coverageNotes.join(" ")).toContain("장면 캡처를 확보하지 못했습니다");
+  });
+
+  it("20분 초과 영상은 엔진을 부르지 않고 failed(too_long)", async () => {
+    const kiro = fakeKiro([]);
+    const id = queued({ purpose: "summary", output: "html", url: YT_URL });
+    expect(await processJob(id, ytDeps(kiro, { fetchMeta: async () => ({ ...META, durationSeconds: 20 * 60 + 1 }) }))).toBe("failed");
+    expect(kiro.calls).toHaveLength(0);
+    expect(getJob(id)!.result!.errors[0].code).toBe("too_long");
+    expect(getJob(id)!.result!.engine).toBe("code"); // 엔진을 부르지 않았으므로 "kiro-cli 실제 생성"으로 표시하지 않음
+  });
+
+  it("자막이 없으면 장면만으로 요약하지 않고 failed(no_transcript)", async () => {
+    const kiro = fakeKiro([]);
+    const id = queued({ purpose: "summary", output: "html", url: YT_URL });
+    expect(await processJob(id, ytDeps(kiro, { fetchTranscript: async () => null }))).toBe("failed");
+    expect(kiro.calls).toHaveLength(0);
+    expect(getJob(id)!.result!.errors[0].code).toBe("no_transcript");
+  });
+
+  it("비공개·삭제 등으로 영상 정보를 못 읽으면 failed(video_unavailable)", async () => {
+    const id = queued({ purpose: "summary", output: "html", url: YT_URL });
+    const d = ytDeps(fakeKiro([]), { fetchMeta: async () => Promise.reject(new Error("영상 정보를 읽지 못했습니다")) });
+    expect(await processJob(id, d)).toBe("failed");
+    expect(getJob(id)!.result!.errors[0]).toMatchObject({ code: "video_unavailable", retryable: false });
+  });
+});
+
 describe("W6 일정 (R3.9, R3.10)", () => {
+  it("연도 없는 일정 → 질문(needs_input) → 답변 → 다시 큐 → 입력 수집 재실행 없이 판정 → 외부 조치 대기 (R4.4)", async () => {
+    const noYear = { candidates: [{ ...SAMPLE_SCHEDULE.candidates[0], yearStated: false }] };
+    const withYear = { candidates: [{ ...SAMPLE_SCHEDULE.candidates[0], yearStated: true }] };
+    const kiro = fakeKiro([noYear, withYear]);
+    const id = queued({ purpose: "schedule", output: "calendar", text: "AI 실무 세미나 11월 20일 15:00" });
+    expect(await processJob(id, deps(kiro))).toBe("needs_input");
+    const asked = getJob(id)!;
+    expect(asked.question?.text).toBeTruthy();
+    expect(asked.question?.answer).toBeNull();
+    const ingestAt = asked.steps.ingest?.at;
+
+    answer(id, "2026년이에요", NOW);
+    expect(getJob(id)!.status).toBe("queued");
+    expect(claimNext("test", 60_000, NOW)?.id).toBe(id);
+    expect(await processJob(id, deps(kiro))).toBe("awaiting_external_action");
+
+    expect(kiro.calls).toHaveLength(2);
+    expect(kiro.calls[1].prompt).toContain("2026년이에요");
+    const done = getJob(id)!;
+    expect(done.steps.ingest?.at).toBe(ingestAt); // 입력 수집 단계는 다시 실행하지 않음
+    expect(done.result?.providerResourceId).toBeUndefined();
+    expect(done.result?.errors.map((e) => e.code)).toContain("calendar_not_connected");
+  });
+
+  it("질문이 두 번 이어져도 앞선 답이 사라지지 않는다: 시각 답 → 연도 질문 → 연도 답 → 두 답 모두 엔진에 전달 (R4.4)", async () => {
+    const base = SAMPLE_SCHEDULE.candidates[0];
+    const noTime = { candidates: [{ ...base, yearStated: false, startTime: null, endTime: null }] };
+    // 모델이 연도를 원문에 있다고 잘못 표시해도 코드가 원문·답변에서 2026을 찾지 못하면 연도 질문을 한다
+    const timeButYearClaimed = { candidates: [{ ...base, yearStated: true, startTime: "14:00", endTime: "16:00" }] };
+    const full = { candidates: [{ ...base, yearStated: true, startTime: "14:00", endTime: "16:00" }] };
+    const kiro = fakeKiro([noTime, timeButYearClaimed, full]);
+    const id = queued({ purpose: "schedule", output: "calendar", text: "독서모임 11월 20일, 시간 추후 공지" });
+    expect(await processJob(id, deps(kiro))).toBe("needs_input");
+
+    answer(id, "오후 2시부터 2시간", NOW);
+    claimNext("test", 60_000, NOW);
+    expect(await processJob(id, deps(kiro))).toBe("needs_input");
+    expect(getJob(id)!.question?.text).toContain("연도");
+    expect(getJob(id)!.result?.coverageNotes.join(" ")).toContain("코드가 연도 미기재로 판정");
+
+    answer(id, "2026년", NOW);
+    claimNext("test", 60_000, NOW);
+    expect(await processJob(id, deps(kiro))).toBe("awaiting_external_action");
+    expect(kiro.calls).toHaveLength(3);
+    expect(kiro.calls[2].prompt).toContain("오후 2시부터 2시간");
+    expect(kiro.calls[2].prompt).toContain("2026년");
+    expect(getJob(id)!.answers).toHaveLength(2);
+  });
+
   it("판정 후 Calendar 미연결이면 외부 조치 대기, 일정 URL 없음", async () => {
     const id = queued({ purpose: "schedule", output: "calendar", text: "AI 실무 세미나 2026년 11월 20일 15:00" });
     expect(await processJob(id, deps(fakeKiro([SAMPLE_SCHEDULE])))).toBe("awaiting_external_action");

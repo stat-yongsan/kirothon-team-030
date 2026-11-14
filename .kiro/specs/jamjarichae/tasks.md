@@ -30,3 +30,10 @@
 - [x] 8. 제출 문서 (Kiro 활용 증거)
   - `docs/integration-status.md`, `docs/skill-adapters.md`, `docs/evidence.md`(요구→코드→테스트→시연), `docs/DEMO.md`(3분 대본), README 앞부분·팀 섹션 갱신
   - 검증: `node scripts/quality.mjs release --force` PASS (13:34:17), `quality.mjs task` PASS
+- [x] 9. 검수 대응: 미검증 경로 실제 확인과 결함 수정 (R2.1, R3.4, R3.7–R3.10, R4.4, R5.6) — 14:25–14:45
+  - 실제 실행(kiro-cli, 샘플 아님): W1 화면 흐름(63초, 출처 8/8 응답, 웹 검색 3회), W2 1회(58초, 외부 조치 필요·영상 URL 없음), W6 모호 입력 → 질문·화면 답변 반복 → 외부 조치 필요, W5 오류 2종(64분 영상 too_long, 없는 영상 video_unavailable), "바로 정리" W3 1회(담기 1번 → 38초 완료)
+  - 발견·수정: ① W6 연도 판정이 모델의 표시만 믿음 → 코드가 원문·답변에서 연도를 다시 확인(`verifyYearStated`, 방어 보강. 처음 의심한 '지어낸 답변'은 실제 사용자 답변이었음) ② 질문이 두 번 이어지면 앞선 답이 사라짐 → 답변 누적(`answers`) ③ 입력 단계 실패도 "kiro-cli 실제 생성" 배지 → `engine: code` ④ 다른 기기 접속 시 담기 403 → Host 헤더 비교(14:19)
+  - 데모 요청 반영: "바로 정리" 체크(기본 켬)로 담자마자 큐에 넣어 워커가 즉시 처리. 끄면 기존처럼 저장 후 맡기기
+  - 테스트 추가: W5 워커 경로 7개, W6 질문→답변→재개 2개, 연도 재확인 3개, Host 1개 → 총 125개
+  - 검증: `node scripts/quality.mjs task` PASS, `release --force` PASS(14:38:50), Edge로 W1·W6 답변·바로 정리·사진 선택 확인
+  - 미완(원래 목표 중 연결 필요): Notebook 영상 생성(W2), Google Calendar 실제 등록(W6), Notion 날짜별 기록, Google 로그인, 이미지 내용 분석, 정시 자동 실행

@@ -1,8 +1,8 @@
 # 잠자리채 작업 인계 (새 세션은 이 파일부터 읽는다)
 
-갱신: 2026-11-14 14:15 KST(kiro-cli 세션 `sess_5b231bf0`, W5·W6 실제 실행, 제출 레포 push, 연습 템플릿 삭제·README 완성). 이전: 13:36 세션 `sess_b4b2809d`. 제출 18:00(사용자 자료 기준, 현장 재확인).
+갱신: 2026-11-14 14:49 KST(kiro-cli 세션 `sess_5b231bf0`, Codex 검수 대응 완료·미커밋). 이전: 13:36 세션 `sess_b4b2809d`. 제출 18:00(사용자 자료 기준, 현장 재확인).
 
-> 지금 실행 중: dev 서버(cmd pid 20656, http://localhost:3000), **휴대폰용 프로덕션 서버**(npm pid 26300, `npm.cmd run start -- -p 3001 -H 0.0.0.0`, http://172.24.96.178:3001, 로그 `.data/start3001.out.log`. 코드를 바꾸면 build 후 재기동), 워커 npm pid 20916 / node pid 33668(로그 `.data/worker6.out.log`, 13:44 youtube.ts 수정 반영). 진단 스크립트 `.data/diag-*.ts`, `.data/diag-submit.mjs`(담기+맡기기 API 호출, git 제외).
+> 지금 실행 중(14:49): dev 서버(cmd pid 20656, http://localhost:3000), 워커 npm pid 33428(로그 `.data/worker8.out.log`), **휴대폰용 프로덕션 서버**(npm pid 28052, `npm.cmd run start -- -p 3001 -H 0.0.0.0`, http://172.24.96.178:3001, 로그 `.data/start3001.out.log`. 코드를 바꾸면 build 후 재기동), 워커 npm pid 20916 / node pid 33668(로그 `.data/worker6.out.log`, 13:44 youtube.ts 수정 반영). 진단 스크립트 `.data/diag-*.ts`, `.data/diag-submit.mjs`(담기+맡기기 API 호출, git 제외).
 
 ## 1. 먼저 읽을 것 (순서)
 
@@ -82,6 +82,13 @@ git: 어제 연습(job-choice) WIP는 타입 오류가 있어 `git stash@{0}`("p
   - `docs/DEMO.md`: 녹화용 주소 표(결과 주소 7개 HTTP 200 확인 14:10), W5·W6 장면 추가
   - 검사: 테스트 112개, `quality.mjs task` PASS, lint 통과, `release --force` **PASS(14:13:05)**
 - [x] **휴대폰 테스트 주소 (14:16–14:22)**: dev 서버는 LAN에서 HMR·폰트 403 → 프로덕션 서버 3001을 0.0.0.0으로 띄움. 담기 403 `cross_origin` 발견 → `http.ts` guard를 Host 헤더 비교로 수정 + 회귀 테스트(113개). task PASS, release PASS(14:20:03). Edge 390px LAN 주소로 담기→맡기기→완료 확인. `integration-status.md` 3.4절
+- [x] **Codex 검수 대응 (14:25–14:49, 세션 `sess_5b231bf0`)** — 자세한 내용 tasks.md 9, integration-status.md 2·3.5–3.7절
+  - 실제 실행: W1 화면 흐름 63초, W2 58초(외부 조치 필요), W6 질문 → 화면 답변 → 재개, W5 오류 2종, "바로 정리" W3 38초. 사진 선택 + 담기(샘플) 확인
+  - 수정: 답변 누적(`job.ts` `answers`), 연도 재확인(`schedule.ts` `verifyYearStated`), 입력 단계 실패 배지 `code`, "바로 정리" 체크(기본 켬, `JamjariApp.tsx`)
+  - 정정: "모델이 답변을 지어냄"은 오판이었음(14:28:57 사용자 답변이 있었음)
+  - 테스트 125개, task PASS, release PASS(14:48:58). **미커밋**(검수 요청이 push 제외라 커밋도 안 함). 변경 파일 14개
+  - 사용자 메모: 자동화 Edge 창(Playwright)에서는 파일 선택 창이 가로채져 안 열림 → 일반 브라우저에서 테스트. 14:44 자동화 창 닫음
+  - 실행 중: dev 3000(pid 20656), 워커 npm 33428(로그 `.data/worker8.out.log`), 프로덕션 3001 npm 28052(14:49 재기동)
 - [ ] Google 로그인(JWT): 사용자 결정 "비밀값은 나중에, 로그인은 나중에 붙이자"(13:5x). OAuth 클라이언트 ID·비밀값 받으면 착수
 
 ## 5. 실행 방법

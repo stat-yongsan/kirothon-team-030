@@ -67,6 +67,8 @@ export function JamjariApp() {
   const [purpose, setPurpose] = useState<Purpose>("concept");
   const [output, setOutput] = useState<OutputKind>("html");
   const [sample, setSample] = useState(false);
+  // 데모 기본값: 담자마자 큐에 넣어 워커가 바로 처리한다. 끄면 저장만 하고 '잠자리채에 맡기기'로 한꺼번에 맡긴다
+  const [runNow, setRunNow] = useState(true);
   const [busy, setBusy] = useState(false);
   const [serverErrors, setServerErrors] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
@@ -136,7 +138,7 @@ export function JamjariApp() {
     form.set("url", url);
     form.set("purpose", purpose);
     form.set("output", output);
-    form.set("intent", "save");
+    form.set("intent", runNow ? "queue" : "save");
     form.set("sample", String(sample));
     keyRef.current ??= newKey();
     form.set("idempotencyKey", keyRef.current);
@@ -153,7 +155,7 @@ export function JamjariApp() {
       setUrl("");
       setImage(null);
       if (fileRef.current) fileRef.current.value = "";
-      setNotice(body.created ? "생각을 담았습니다. 자기 전에 '잠자리채에 맡기기'를 누르세요." : "이미 담은 생각입니다(중복 저장 안 함).");
+      setNotice(!body.created ? "이미 담은 생각입니다(중복 저장 안 함)." : runNow ? "담고 바로 정리를 시작했습니다. 아래 작업 보드에서 진행 상태가 바뀝니다(오늘 실측 작업당 10초–1분)." : "생각을 담았습니다. 자기 전에 '잠자리채에 맡기기'를 누르세요.");
       await refresh();
     } catch {
       setServerErrors(["서버에 연결하지 못했습니다."]);
@@ -327,8 +329,12 @@ export function JamjariApp() {
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <button type="button" data-testid="capture" onClick={submit} disabled={busy || !check.ok} className={`${btn} bg-[#ffd23f] text-lg`}>
-            ＋ 생각 담기
+            {runNow ? "＋ 담고 바로 정리" : "＋ 생각 담기"}
           </button>
+          <label className="flex items-center gap-2 text-sm font-bold">
+            <input type="checkbox" checked={runNow} onChange={(e) => setRunNow(e.target.checked)} data-testid="run-now" className="h-5 w-5 accent-black" />
+            바로 정리(데모: 밤까지 기다리지 않음)
+          </label>
           <label className="flex items-center gap-2 text-sm font-bold">
             <input type="checkbox" checked={sample} onChange={(e) => setSample(e.target.checked)} data-testid="sample-mode" className="h-5 w-5 accent-black" />
             샘플 모드(Kiro 호출·외부 접속 없음)

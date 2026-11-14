@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decideSchedule, zonedToUtc, type ScheduleCandidate } from "./schedule";
+import { decideSchedule, verifyYearStated, zonedToUtc, type ScheduleCandidate } from "./schedule";
 
 const NOW = new Date("2026-11-14T03:00:00Z"); // 2026-11-14 12:00 KST
 const TZ = "Asia/Seoul";
@@ -100,5 +100,23 @@ describe("decideSchedule (R3.9, R3.10)", () => {
     const d = decideSchedule({ candidates: [ev({ timezone: "UTC" })], notes: [] }, TZ, NOW);
     expect(d.event?.startUtc).toBe("2026-11-20T15:00:00.000Z");
     expect(d.assumptions).toEqual([]);
+  });
+});
+
+describe("verifyYearStated: 모델의 연도 표시를 원문으로 다시 확인", () => {
+  it("모델이 yearStated=true라고 해도 원문·답변에 2026이 없으면 연도 미기재 → 질문", () => {
+    const x = verifyYearStated({ candidates: [ev({ yearStated: true })], notes: [] }, ["독서모임 11월 20일 15시", null]);
+    expect(x.candidates[0].yearStated).toBe(false);
+    expect(x.notes.join(" ")).toContain("연도(2026)가 없어");
+    expect(decideSchedule(x, TZ, NOW).status).toBe("needs_input");
+  });
+  it("원문에 연도가 있으면 그대로 둔다", () => {
+    const x = verifyYearStated({ candidates: [ev({ yearStated: true })], notes: [] }, ["2026년 11월 20일 15:00 세미나"]);
+    expect(x.candidates[0].yearStated).toBe(true);
+    expect(x.notes).toEqual([]);
+  });
+  it("사용자 답변에 연도가 있으면 그대로 둔다", () => {
+    const x = verifyYearStated({ candidates: [ev({ yearStated: true })], notes: [] }, ["11월 20일 15시", "2026년이에요"]);
+    expect(x.candidates[0].yearStated).toBe(true);
   });
 });
